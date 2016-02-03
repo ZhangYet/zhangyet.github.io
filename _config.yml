@@ -1,7 +1,8 @@
 # Dependencies
-markdown:         redcarpet
-redcarpet:
-  extensions: ["tables"]
+# markdown:         redcarpet
+markdown	    kramdown
+# redcarpet:
+  #extensions: ["tables"]
 
 pygments:         true
 
