@@ -15,3 +15,15 @@ comments: true
     6. 参考文献：
         Less is more, generic programming theory and practice
         A Generic Deriving Mechanism for haskell
+
+## Neo Line: Haskell在渣打的应用
+
+    1. Haskell的优势：
+       类型系统＋函数 => 业务需求；跨平台； 组合优于即成； 脚本，框架 系统， 集群； 强类型 => 业务校验；面向客户开发； 工具链完备
+
+## 邵成: Expression Problem
+
+    1. 怎样做DSL解释器
+    2. FP: easy to add functions, hard to add constructs; OO is on the other side.
+
+## 范畴论
