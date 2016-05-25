@@ -5,7 +5,7 @@
   #extensions: ["tables"]
 
 #pygments:         true
-rouge   true
+rouge:   true
 
 # Permalinks
 permalink:        pretty
