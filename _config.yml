@@ -4,7 +4,7 @@
 # redcarpet:
   #extensions: ["tables"]
 
-#pygments:         true
+pygments:         true
 rouge:   true
 
 # Permalinks
