@@ -1,6 +1,6 @@
-Dependencies
+# Dependencies
 # markdown:         redcarpet
-markdown	    kramdown
+# markdown	    kramdown
 # redcarpet:
   #extensions: ["tables"]
 
