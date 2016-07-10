@@ -1,10 +1,9 @@
-# Dependencies
+Dependencies
 # markdown:         redcarpet
-# markdown	    kramdown
+markdown	    kramdown
 # redcarpet:
   #extensions: ["tables"]
 
-pygments:         true
 rouge:   true
 
 # Permalinks
