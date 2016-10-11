@@ -4,13 +4,13 @@ title: "Spike 抓虫记"
 comments: true
 ---
 
-`spike` 是一个 `graphite_api` 的 proxy .
+`spike` 是我实现的一个 `graphite_api` 的 proxy .
 
 通过 `graphite_api` 查询 `whishper` 数据的时候，`query` 的形式可能会很复杂，涉及到函数嵌套等问题，所以 `spike` 其实只做了一个工作：从线上的 `graphite_api` 中读取数据，再调用 `graphite_api` 进行下一步的处理。实质上，从 `graphite_api` 读取的数据是时间戳－数据值点对，这些数据点对是 `graphite_api` 最终处理的结果，`spike` 读取这些数据之后，需要对它们作逆映射，转换成 `graphite_api` 定义的 `TimeSeries` 实例。 总的来说，可以把 `spike` 看作一个从其它线上 `whisper` 读取数据的 `graphite_api` （很惭愧，`spike` 只是做了一点微不足道的工作)。
 
 昨天 @wzyboy 跟我提了一个 bug : 同样的查询语句直接查询 `graphite_api` 可以正常地获取数据，但是访问 `spike` 却会返回500错误。于是我开始排查原因。
 
-这个问题有点诡异，因为我无法再本地复现。因为错误信息最终定位到 `graphite_api` 的 `doDrawImage` 函数，所以我最初想到是会不会是 `graphite_api` 的版本问题。我本地的 `graphite_api` 是1.1.2版本，而线上的是1.1.3。于是在依赖里面指定了版本，上了一个新的容器，发现问题并没有解决。
+这个问题有点诡异，因为我无法在本地复现。错误信息最终定位到 `graphite_api` 的 `doDrawImage` 函数，我最初想会不会是 `graphite_api` 的版本问题。我本地的 `graphite_api` 是1.1.2版本，而线上的是1.1.3。于是在依赖里面指定了版本，上了一个新的容器，发现问题并没有解决。
 
 然后我又开了一个 `cell` 的测试环境，在上面启动 `spike`， 这个 `spike` 同样无法复现前面的错误。最后我只能钻进容器里面，找到容器中的 `graphite_api` 在可疑的地方插入 `print` 排查有错误的地方。
 
