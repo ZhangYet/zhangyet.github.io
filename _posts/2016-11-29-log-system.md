@@ -47,3 +47,12 @@ Kafka 在其中扮演了非常重要的角色。有了 Kafka 做缓冲，即使�
 
 为了确保双十一，我们再次改造了 eru1 的日志收集系统。
 ![eru1日志收集系统(双十一改版)](http://zhangyet.github.io/public/image/eru1-log-system-1111.png)
+
+这次的改动是让容器先将容器打到本地的 rsyslog ，后者配置缓存队列，确保1. 有足够能力消化容器产生的日志；2. 在日志收集服务器挂掉的情况下，支持住，尽量不丢日志。这个改动是成功的，我们成功度过了双十一。
+
+但是，从整体来看，整个日志系统到了最危险的时候，C1 的情况可以先放在一边，C2 的 agent log 和 elb access log 的处理方式，多种日志收集工具并存(rsyslog, logstash和heka)。可以说是乱象横生。
+
+##  如切如磋，如琢如磨
+为了结束这种混乱的情况，前一周和 Flex，菊总讨论，我们重新设计了 C2 的日志收集系统。
+
+![eru2日志收集系统(version 2)](http://zhangyet.github.io/public/image/eru2-log-system-ver2.png)
