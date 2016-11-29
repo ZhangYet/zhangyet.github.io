@@ -13,7 +13,7 @@ comments: true
 ## 矇昧始觉，雪夜曙光
 随着 eru 平台的上线，我们终于开始有了一套相对完善的日志收集系统。 eru 平台上主要收集了两种日志：容器产生的日志和 elb 的 access log 。当时 elb 日志系统的体系相当简单：
 
-![eru1日志收集系统](../public/image/eru1-log-system.png)
+![eru1日志收集系统](http://zhangyet.github.io/public/image/eru1-log-system.png)
 
 这个架构相当简单明了。但是存在一个问题：agent 到日志收集服务器之间缺乏一个缓存（实际上 agent 是有一个比较小的缓存的，但一般没有开），而日志收集服务器作为一个单点，是整个系统最薄弱的一环。整个问题一直困扰着 eru1 。
 
@@ -28,7 +28,7 @@ comments: true
 ## 一元复始，万象初开
 eru1 日志解决不了的如果问题给我们带来了若干困扰，痛定思痛之余，我们设计了 eru2 的日志系统。eru2 日志收集系统最初的设计如下图。
 
-![eru2日志收集系统(version 1)](../public/image/eru2-log-system-ver1.png)
+![eru2日志收集系统(version 1)](http://zhangyet.github.io/public/image/eru2-log-system-ver1.png)
 
 Kafka 在其中扮演了非常重要的角色。有了 Kafka 做缓冲，即使日志收集机器有什么三长两短，我们依然可以补回日志。
 
@@ -46,4 +46,4 @@ Kafka 在其中扮演了非常重要的角色。有了 Kafka 做缓冲，即使�
 正所谓“正入万山圈子中，一山放过一山拦”，时间接近双十一，日志系统依然混乱。而 eru1 日志系统的遗留问题，引发了[一次药丸的线上错误](http://blog.ricebook.net/a-pill-error-online/),  这次事故的原因简单概括来说，就是：容器产生了大量日志，heka 处理不来， agent 往 heka 这一段堵死了，然后容器到 agent 这一段也堵死了，之后容器就被堵死了。[注1]
 
 为了确保双十一，我们再次改造了 eru1 的日志收集系统。
-![eru1日志收集系统(双十一改版)](../public/image/eru1-log-system-1111.png)
+![eru1日志收集系统(双十一改版)](http://zhangyet.github.io/public/image/eru1-log-system-1111.png)
