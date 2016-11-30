@@ -36,7 +36,7 @@ Kafka 在其中扮演了非常重要的角色。有了 Kafka 做缓冲，即使�
 
 在十一假期结束的时候，小马已经为 eru2 的日志收集系统构建了一组 heka 插件，eru2 的日志收集已经顺利运作起来了，一起看起来都是如此美好。但是没有人想到，命运的阴谋已经在前方等着他们了。
 
-## 混乱之治
+## 多事之秋，混乱之治
 十月份开始，我们的工作重点落在迁移 apollo 一事上。而在十月中旬，一个潇湘夜雨的晚上，apollo 的 mq 开始疯狂吐日志，然后龙老板发现落地的日志有巨大的延时：晚上7点看到落地的日志还是5点多的日志。更要命的是，在 kafka 上面看到对应的 topic 的 LAG 始终在增大， Offset 一直没有移动。
 
 这里其实包含了三个问题：1. heka 消费了 kafka 的信息之后，并不会改变 kafka 的 Offset， 这是 heka kafka 插件的锅； 2. heka 的日志处理能力； 3. apollo 的日志吐疯了。
@@ -56,3 +56,33 @@ Kafka 在其中扮演了非常重要的角色。有了 Kafka 做缓冲，即使�
 为了结束这种混乱的情况，前一周和 Flex，菊总讨论，我们重新设计了 C2 的日志收集系统。
 
 ![eru2日志收集系统(version 2)](http://zhangyet.github.io/public/image/eru2-log-system-ver2.png)
+在过去的两周里面，我们将日志收集系统从双十一之后的混乱状态整理到上图中的状态。现在接入了系统的日志有：
+
+1. nginx access log;
+2. elb access log; [注2]
+3. eru agent log;
+
+这个改造的过程当中，有一点人生经验是值得拿出来说的：
+
+1. 可以用 ` rsyslogd -N 1` 来检查 rsyslog 配置；
+2. 截止到本文写作的时候，**rsyslog 并没有一个足够好的插件实现“日志输出到 hdfs”这个任务**，omhdfs 安装就是麻烦事，所以当时就被我们放弃了。omhttpfs 性能跟不上，也不够稳定，试用之后被我们放弃了；
+3. **rsyslog 队列模型** 。rsyslog 所有输入都会进入 rsyslog main queue。 然后 rsyslog 会将信息分发到对应的 ruleset 的队列。ruleset 所有 action 会并行处理消息，当所有 action 都处理了这个消息之后， 这条消息会在 rsyslog main queue 中出队。换言之：一条消息在 main queue 中停留的时间，会取决于它对应的 ruleset 中最慢的 action。关于 rsyslog 的队列模型，可以参考以下文档：[Understanding rsyslog Queues](http://www.rsyslog.com/doc/v8-stable/concepts/queues.html#processing-timeframes), [Turning Lanes and Rsyslog Queues](http://rsyslog.readthedocs.io/en/latest/whitepapers/queues_analogy.html) 。[注3]
+
+了解了 rsyslog 队列模型之后，我们对为每个 action 配置了独立的队列，这样 main queue 堵塞从而引发日志延时的可能性大大减低。
+
+## 其路漫漫，上下求索
+目前 C2 机房的日志收集系统已经初步完善，更多的日志可以方便地接入这个系统。更多的问题将会随着业务增长接踵而来。眼下有几个重要的问题：
+
+1. 如何提供一个方便的日志查阅工具?
+2. 随着日志量的增长，服务收集日志的 rsyslog 中心，该如何扩展？
+3. 收集到的日志，还可以发挥什么作用？
+
+以上就是谦卑的平台工程师小马的记录，他把这些记录予以发表，是为了总结过去“一点微不足道的工作”，使之不因为岁月的流逝而被人们遗忘。[注4]
+
+[注1] 这个错误发生在双十一之前的周五，上午发生了问题之后，我们怀疑是日志的问题，但是还不知道发生问题的具体环节，直到晚上更严重的事故处理完之后，我们才开始更细致的排查，找到原因。造成事故难以排查的原因是 product 对 akihabara 的强依赖，而它们恰好都上了会产生大量日志的版本。我认同CMGS的看法：这个时候就应该严格控制变量。 
+
+[注2] nginx 负责将流量分发到 elb， 而 elb 负责将流量分发到容器。在系统迁移的过程当中，经常出现 nginx 没有将流量分发到正确的 elb 的情况（比如将 C2 机房的流量分发到 C1 机房的 elb），如果没有 nginx 的日志，DEBUG 的难度将会上升。
+
+[注3] 这几点经验其实都是 Flex 找到并总结的。
+
+[注4] 这里模仿了两个大人物的名言，其中一个大家都很熟悉，剩下不熟悉的那个是希罗多德。
