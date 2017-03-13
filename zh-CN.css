@@ -21,9 +21,14 @@
 }
 
 body { font-family: 'Droid Serif', 'Palatino Linotype', 'Book Antiqua', Palatino, 'Songti SC', serif; }
-h1, h2, h3 {
+h2, h3 {
   font-family: 'Yanone Kaffeesatz', 'Palatino Linotype', 'Book Antiqua', Palatino, 'STHeiti', 'SimHei', 'Microsoft YaHei';
   font-weight: normal;
+}
+h1 {
+  font-family: 'Yanone Kaffeesatz', 'Palatino Linotype', 'Book Antiqua', Palatino, 'STHeiti', 'SimHei', 'Microsoft YaHei';
+  font-weight: normal;
+  font-size: large;
 }
 a, a > code {
   color: rgb(249, 38, 114);
