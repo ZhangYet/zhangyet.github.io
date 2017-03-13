@@ -28,7 +28,7 @@ h2, h3 {
 h1 {
   font-family: 'Yanone Kaffeesatz', 'Palatino Linotype', 'Book Antiqua', Palatino, 'STHeiti', 'SimHei', 'Microsoft YaHei';
   font-weight: normal;
-  font-size: medium;
+  font-size: 400px;
 }
 a, a > code {
   color: rgb(249, 38, 114);
