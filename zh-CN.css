@@ -28,7 +28,7 @@ h2, h3 {
 h1 {
   font-family: 'Yanone Kaffeesatz', 'Palatino Linotype', 'Book Antiqua', Palatino, 'STHeiti', 'SimHei', 'Microsoft YaHei';
   font-weight: normal;
-  font-size: 400px;
+  font-size: 380px;
 }
 a, a > code {
   color: rgb(249, 38, 114);
@@ -79,7 +79,8 @@ a, a > code {
   clear: both;
 }
 img {
-  max-width: 100%;
+    max-width: 100%;
+    max-height: inherit;
 }
 blockquote {
   border-left: solid 5px lightgray;

@@ -31,9 +31,8 @@ class: middle
 class: middle
 # 发展历史
 
-* 芒果TV时期;
-* Enjoy Eru Version 1;
-* Enjoy Eru Version 2;
+* Version 1 (Python 实现);
+* Version 2 (以 Go 为主);
   
 ---
 class: middle
@@ -90,24 +89,15 @@ class: center, middle
 
   动态感知容器, 高度灵活的分流规则。
 
----
-class: center, middle
-# Suramar
-
-  redis 调度平台
   
 ---
 class: center, middle
-# 日志收集
+# 日志收集与监控
 
-  基于 rsyslog, 高性能，多种查询方式。
+  * 日志收集: 基于 rsyslog, 高性能，多种查询方式。
+  * 监控: 基于 graphite, 可横向扩展，自动报警。
   
----
-class: center, middle
-# 监控
 
-  基于 graphite, 可横向扩展，自动报警。
-  
 ---
 class: middle
 # 核心调度算法: 需求与场景
@@ -142,6 +132,19 @@ class: middle
   基于资源限制的两种调度算法：
   * 基于CPU的算法(**CPU-bind**)： redis;
   * 基于内存的算法(**MemCap**)： Java 应用；
+
+---
+class: middle
+# 更为精确的调度算法
+
+  考虑一种可能的情况：假设我们有3台机器: A, B, C. 因为各种原因，A和B上面个有有1个容器，C上面有10个容器，此时资源分配极为不平衡！ 此时若我们要继续分配容器。按照前面的思路，将会继续加剧不平衡的状况。因此，我们设计了根据容器当下分布以及当前需求一起进行分配的调度算法。
+  
+---
+class: middle
+# 更为精确的调度算法
+
+  这种更为精确的调度算法在实现上就像修补一个木板长短不一的木桶: 我们将节点上容器的个数看作木板的长度，不断地补上短木板的长度，从而让所有木板的长度尽量一致。
+.center[![](http://www.weiyaclub.com/wp-content/uploads/2011/12/11.jpg)]
 
 ---
 class: middle, center
