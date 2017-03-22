@@ -26,21 +26,13 @@ class: middle
 * Eru基本架构
 * 核心调度算法: 需求与实现
 
-
----
-class: middle
-# 发展历史
-
-* Version 1 (Python 实现);
-* Version 2 (以 Go 为主);
-  
 ---
 class: middle
 # Eru 主要组件 
 
 * eru-core;
 * agent;
-* 前端UI系统 citadel;
+* 综合应用系统 citadel;
 * 其他(监控、日志收集等);
 
 ---
@@ -122,7 +114,7 @@ class: middle
 伪代码
 ```
  0. 寻找有足够资源的节点；
- 1. 计算每个可用节点的可以分配多少个容器；
+ 1. 计算每个可用节点的可以分配多少个容器；(其实主要是这里实现得复杂了)
  2. 平均分配;
 ```
   
@@ -146,13 +138,6 @@ class: middle
 
   这种更为精确的调度算法在实现上就像修补一个木板长短不一的木桶: 我们将节点上容器的个数看作木板的长度，不断地补上短木板的长度，从而让所有木板的长度尽量一致。
 .center[![](http://www.weiyaclub.com/wp-content/uploads/2011/12/11.jpg)]
-
----
-class: middle, center
-# 招聘时间
-
-  诚招：Java工程师
-  有意者请发简历到 **zhangye@ricebook.com**
     </textarea>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
 <script>var slideshow = remark.create({
