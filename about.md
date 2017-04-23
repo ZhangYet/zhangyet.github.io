@@ -38,7 +38,11 @@ title: About
 
 1. **suramar** redis 调度平台
 
+    做了一点维护工作。
+
 1. **日志系统**
+
+    最初用 heka 进行日志收集，后来 heka 被弃坑以及我们系统改进之后，我们改用了 `rsyslog` 作为日志收集组件。具体的开发改进见[《Enjoy 日志收集系统》](http://zhangyet.github.io/2016/11/29/log-system/)
 
 ## **业务相关**
 
