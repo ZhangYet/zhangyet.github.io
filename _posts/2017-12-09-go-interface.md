@@ -26,7 +26,7 @@ func HandleUuidResource(input []UuidHandler) []UuidHandler {
 }
 ```
 
-然后这个计划无情地失败了，这当然跟我的需求有关，最终发现这种实现方式对我的需求依然有一定距离。当然，最大的问题在于：**对于 `go` 函数来说，即使你为 `XXXApiOutput` 实现了 `GetUuid `方法，`[]XXXApiOutput` 和 `[]UuidHandler` 依然是不同的类型**。
+然后这个计划无情地失败了，这跟我的需求有关，最终发现这种实现方式对我的需求依然有一定距离。当然，最大的问题在于：**对于 `go` 函数来说，即使你为 `XXXApiOutput` 实现了 `GetUuid `方法，`[]XXXApiOutput` 和 `[]UuidHandler` 依然是不同的类型**。
 
 详细的内容可以参考这篇博文: [Intro++ to Go Interfaces](https://npf.io/2014/05/intro-to-go-interfaces/)。
 
