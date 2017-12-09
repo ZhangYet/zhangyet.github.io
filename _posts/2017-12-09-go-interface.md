@@ -1,4 +1,8 @@
-# go interface 补充说明
+---
+layout: post
+title: "go interface 补充说明"
+comments: true
+---
 
 工作中遇到一个需求：对接口进行个性化配置。
 
