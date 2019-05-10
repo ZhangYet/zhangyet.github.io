@@ -1,0 +1,34 @@
+---
+title: "kamui: bookdown vscode 插件"
+tags: ["bookdown", "R", "vscode"]
+date: 2019/04/04 08:44:25
+excerpt: 假期写了一个 vscode 插件
+---
+
+## kamui 简介
+
+这段时间还没有到新公司报到，有空捣鼓一些没有什么回报的东西。所以我写了一个 vscode 插件：[kamui](https://marketplace.visualstudio.com/items?itemName=dantezy.kamui)。
+
+`kamui` 是 [bookdown](https://bookdown.org/) 的 vscode 插件。这个名字来自《火影忍者》里面卡卡西的写轮眼忍术神威，这是 `bookdown` 作者[谢益辉](https://yihui.name/)的趣味。目前功能很原始，只能 build 一个已有的 `bookdown` 项目，功能容劣者慢慢迭代吧。
+
+## 缘起
+
+之前我接了我朋友[魏太云](https://cosx.org/members/)介绍的翻译工作。考察了几种工具之后，我发现 `bookdown` 基本是组织技术书籍写作最好的工具——简单易上手、能生成多种格式的文本还能运行内嵌的代码。唯一的问题是：这是一个 `R` 包。它和 [RStudio](https://www.rstudio.com/) 整合得非常好——但是，”阿 Sir，我唔写 R 好耐啦！“（大家肯定知道我在玩《英雄本色》梗啦）。我现在主要的开发工具是喷气大脑的 [goland](https://www.jetbrains.com/go/)。非主力开发工具是日渐生疏的 emacs 和日渐成熟的 vscode。
+
+为此，我决定为 `bookdown` 写一款 vscode 插件。
+
+当然这只是主要原因，次要原因是我4月15日到[新公司](https://www.v2ex.com/t/480147)报到之前，我一直赋闲在家，我需要做一些落地的东西，维护自己的技能。
+
+## 经验
+
+开发这种小功能，本来是很简单的。唯一的障碍在于：我从来没有学过前端开发（或者说 js 开发）。仔细思量我觉得对我来说，学习新技能的障碍往往是三点：
+
+1. 开发环境难搭，缺乏反馈（告诉你对错）的手段；
+2. 缺乏动力和目标；
+3. 对新知识整个体系陌生；
+
+做 vscode 插件开发幸运之处在于开发环境随手可得（最多自己再装个 `nodejs`)。
+
+但对前端的知识体系陌生，这是致命的。
+
+js 的语法很简单，即使考虑闭包和构造器，只要不作妖，其实不难。难在要理解现有的库和 API 的设计。在翻看 vscode 的 API 文档的时候，我发现我完全无法理解这些 API 的作用。直到我看了 [《深入浅出Node.js》](https://book.douban.com/subject/25768396/)，这本书让我对“事件驱动”和 Promise 有了初步印象，此后我看文档才真正看进去。套用库恩[《科学革命的结构》](https://book.douban.com/subject/20376550/)里面的概念，不同的开发领域，存在不同的范式，你需要理解范式才能更好地理解该领域。
