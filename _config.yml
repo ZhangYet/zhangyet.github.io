@@ -1,6 +1,6 @@
 # Dependencies
-markdown:         redcarpet
-theme:            minima
+#markdown:         redcarpet
+theme:            hacker
 # markdown	    kramdown
 # redcarpet:
   #extensions: ["tables"]
