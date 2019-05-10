@@ -1,6 +1,6 @@
 # Dependencies
 #markdown:         redcarpet
-theme:            hacker
+theme: jekyll-theme-hacker
 # markdown	    kramdown
 # redcarpet:
   #extensions: ["tables"]
