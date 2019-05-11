@@ -1,6 +1,6 @@
 ---
 title: "张晔(dantezy)"
-tags: ["go", "python", "cloud", "docker"]
+tags: ["go", "python", "cloud", "docker", "lua"]
 date: 2019/04/04 11:19:53
 excerpt: 个人简历，不定期更新。沽之哉，沽之哉！我待贾者也。
 ---
@@ -19,7 +19,7 @@ excerpt: 个人简历，不定期更新。沽之哉，沽之哉！我待贾者�
 
 * 2019.04-至今 **SixteenMarkets**
 
-    1. [fix simulator](fix_simulator)
+    1. [fix simulator](/_posts/2019-04-16-fix_simulator.md)
 
 * 2017.09-2019.03 **滴滴云** 滴滴云用户系统
 
