@@ -1,90 +1,20 @@
+---
+---
 <?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="https://www.w3.org/2005/Atom" xmlns:dc="https://purl.org/dc/elements/1.1/">
   <channel>
-    <title>Chalk</title>
-    <description></description>
-    <link>https://zhangyet.github.io</link>
-    <atom:link href="https://zhangyet.github.io/feed.xml" rel="self" type="application/rss+xml" />
-    
+    <title>{{ site.name | xml_escape }}</title>
+    <description>{% if site.description %}{{ site.description | xml_escape }}{% endif %}</description>
+    <link>{{ site.url }}</link>
+    <atom:link href="{{ page.path | absolute_url }}" rel="self" type="application/rss+xml" />
+    {% for post in site.posts limit:10 %}
       <item>
-        <title>写一个 FIX 模拟器</title>
-        <description></description>
-        <pubDate>Thu, 25 Apr 2019 12:31:10 +0800</pubDate>
-        <link>https://zhangyet.github.io/posts/fix-simulator</link>
-        <guid isPermaLink="true">https://zhangyet.github.io/posts/fix-simulator</guid>
+        <title>{{ post.title | xml_escape }}</title>
+        <description>{{ post.description | xml_escape }}</description>
+        <pubDate>{{ post.date | date_to_rfc822 }}</pubDate>
+        <link>{{ post.url | absolute_url }}</link>
+        <guid isPermaLink="true">{{ post.url | absolute_url }}</guid>
       </item>
-    
-      <item>
-        <title>读书有什么用呢？</title>
-        <description></description>
-        <pubDate>Sat, 20 Apr 2019 02:35:48 +0800</pubDate>
-        <link>https://zhangyet.github.io/posts/why-reading</link>
-        <guid isPermaLink="true">https://zhangyet.github.io/posts/why-reading</guid>
-      </item>
-    
-      <item>
-        <title>《塑造工业时代》书评</title>
-        <description></description>
-        <pubDate>Thu, 18 Apr 2019 23:32:38 +0800</pubDate>
-        <link>https://zhangyet.github.io/posts/shaping-the-industrial-century</link>
-        <guid isPermaLink="true">https://zhangyet.github.io/posts/shaping-the-industrial-century</guid>
-      </item>
-    
-      <item>
-        <title>Emacs extension 开发入门</title>
-        <description></description>
-        <pubDate>Thu, 18 Apr 2019 11:06:28 +0800</pubDate>
-        <link>https://zhangyet.github.io/posts/emacs-extension</link>
-        <guid isPermaLink="true">https://zhangyet.github.io/posts/emacs-extension</guid>
-      </item>
-    
-      <item>
-        <title>FIX 简介</title>
-        <description></description>
-        <pubDate>Tue, 16 Apr 2019 10:04:43 +0800</pubDate>
-        <link>https://zhangyet.github.io/posts/fix-intro</link>
-        <guid isPermaLink="true">https://zhangyet.github.io/posts/fix-intro</guid>
-      </item>
-    
-      <item>
-        <title>在数字化社会独善其身</title>
-        <description></description>
-        <pubDate>Mon, 15 Apr 2019 01:53:19 +0800</pubDate>
-        <link>https://zhangyet.github.io/posts/digital-minimalism</link>
-        <guid isPermaLink="true">https://zhangyet.github.io/posts/digital-minimalism</guid>
-      </item>
-    
-      <item>
-        <title>我们为什么要反对996</title>
-        <description></description>
-        <pubDate>Sat, 13 Apr 2019 10:55:19 +0800</pubDate>
-        <link>https://zhangyet.github.io/posts/anti-996</link>
-        <guid isPermaLink="true">https://zhangyet.github.io/posts/anti-996</guid>
-      </item>
-    
-      <item>
-        <title>go modules 简介</title>
-        <description></description>
-        <pubDate>Mon, 08 Apr 2019 20:02:49 +0800</pubDate>
-        <link>https://zhangyet.github.io/posts/go-mod-introduction</link>
-        <guid isPermaLink="true">https://zhangyet.github.io/posts/go-mod-introduction</guid>
-      </item>
-    
-      <item>
-        <title>QEMU启世录</title>
-        <description></description>
-        <pubDate>Mon, 08 Apr 2019 19:14:50 +0800</pubDate>
-        <link>https://zhangyet.github.io/posts/qemu-in-action</link>
-        <guid isPermaLink="true">https://zhangyet.github.io/posts/qemu-in-action</guid>
-      </item>
-    
-      <item>
-        <title>《古希腊碑铭体诗歌选》摘抄</title>
-        <description></description>
-        <pubDate>Mon, 08 Apr 2019 11:53:49 +0800</pubDate>
-        <link>https://zhangyet.github.io/posts/greek-poems</link>
-        <guid isPermaLink="true">https://zhangyet.github.io/posts/greek-poems</guid>
-      </item>
-    
+    {% endfor %}
   </channel>
 </rss>
