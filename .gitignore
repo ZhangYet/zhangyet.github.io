@@ -1,4 +1,2 @@
 *.html~
-.bundle/*
-vendor/*
 _site/*
