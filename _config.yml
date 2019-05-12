@@ -1,37 +1,64 @@
-# Dependencies
-#markdown:         redcarpet
-theme: jekyll-theme-midnight
-# markdown	    kramdown
-# redcarpet:
-  #extensions: ["tables"]
+# Mandatory settings
 
-rouge:   true
+blog_theme: light # Or use dark
+name: Chalk
+paginate: 25
+url: https://zhangyet.github.io
 
-# Permalinks
-permalink:        pretty
 
-# Setup
-title:            Ah！Nothing here!
-tagline:          'python, emacs'
-url:              http://zhangyet.github.io/
+# Optional settings
 
-author:
-  name:           'Dante Zhang'
-  url:            http://zhangyet.github.io/
+theme_toggle: false # Change to true if you wish to show an icon in the navigation for dynamic theme toggling
+about_enabled: false # Change to true if you wish to show an icon in the navigation that redirects to the about page
+baseurl: # Set if blog doesn't sit at the root of the domain (format: /blog)
+discus_identifier: # Add your Disqus identifier
+ga_analytics: # Add your GA Tracking Id
+local_fonts: false # Change to true if you wish to use local fonts
+rss_enabled: true # Change to false if not
+scrollappear_enabled: true # Change to false to disable
+social:
+  github: ZhangYet
+  twitter: dantezy2814
+  email: zhangyet@gmail.com
 
-paginate:         1
+# Important settings (change at own risk)
 
-# Custom vars
-version:          1.0.0
-
-github:
-  repo:		  https://github.com/ZhangYet/zhangyet.github.io
-
-# This is the list of pages to incldue in the header of the website.
-pages_list:
-  About: '/about/'
-  Archive: '/archive/'
-  Feed: '/atom.xml'
-
-# Allow URL Redirects:
-#  * https://help.github.com/articles/redirects-on-github-pages
+assets:
+  plugins:
+    css: { autoprefixer: {}}
+    img: { optim: {}}
+  source_maps: false
+  sources:
+    - _assets/icons
+    - _assets/javascripts
+    - _assets/stylesheets
+    - _assets/yarn
+collections:
+  my_tags:
+    output: true
+    permalink: /tag/:slug/
+defaults:
+  -
+    scope:
+      path: ""
+      type: my_tags
+    values:
+      layout: articles_by_tag
+exclude:
+  - .travis.yml
+  - bin/*
+  - circle.yml
+  - Gemfile
+  - Gemfile.lock
+  - package.json
+  - package-lock.json
+  - README.md
+  - vendor/
+  - yarn.lock
+plugins:
+  - jekyll-assets
+  - jekyll-paginate
+  - jekyll-sitemap
+  - jemoji
+paginate_path: /posts/page/:num/
+permalink: posts/:slug
