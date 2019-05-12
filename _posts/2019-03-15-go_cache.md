@@ -1,0 +1,73 @@
+---
+title: "go cache 实现综述"
+tags: ["golang", "cache"]
+date: 2019/03/15 21:23:19
+excerpt: 讨论了缓存开发的一些技术要求，考查了现有的缓存实现。
+---
+
+本文是 [The State of Caching in Go](https://blog.dgraph.io/post/caching-in-go/) 的读书笔记，希望通过本文，理清缓存设计的一些思路，同时考擦已有的 `go` 缓存实现的方案，“鉴于往事，有资于治道也”。
+
+## 缓存的几点要求
+
+1. 并发；
+2. 可以限制内存使用；
+3. 随着 `goroutine` 或 core 的数目增长，scale well；
+4. 非随机 key 的情况下， scale well；
+5. 缓存命中率高；
+
+## 几种 trival 的方案
+
+### Go map with sync.Mutex
+
+直接用 `Go` 的 `map` 来做缓存，这种方法当然简单实在，加上 `sync.Mutex` 可以避免并发的问题。但首先它不会限制内存的使用，其次，`goroutine` 一旦多了，所有 `goroutine` 都在等锁释放，性能下降了。（但是我看不出它跟 key 的分布有什么关系，感觉缓存命中率也不是考虑的范围。[原文](https://blog.dgraph.io/post/caching-in-go/)说它不符合要求2-5，这令我觉得很诧异。
+
+### Go map using lock striping
+
+关于什么是 lock striping, 可以看[这个回答](https://stackoverflow.com/questions/16151606/need-simple-explanation-how-lock-striping-works-with-concurrenthashmap)。 通过 lock striping，多线程（多 
+`goroutine`) 场景下，不会整个缓存锁住（只会锁住一部分），解决了要求3，但是依然没有限制朱内存使用。
+
+### LRU cache
+
+然后 `Dgraph` 的开发人员使用了 [groupcache](https://github.com/golang/groupcache/blob/master/lru/lru.go) 中的 lru 缓存。 整个 lru 实现非常经典：一条限制了长度的链表记录了对应的 key 的新旧情况，然后一个 `map` 记录了对应的 key-value 对。通过限制链表长度来限制内存使用存在不足——谁知道你往缓存里面存些什么东西。当然它们还对这个 lru 做了二次开发——加了锁。
+
+然后他们就被悲哀地发现，这种双链表的 lru 实现每次读都要写一次链表（更新记录的新旧情况）实在太坑了，它带来了大量的 contention，所以这种方案不符合要求3-4
+
+### Striped LRU cache
+
+这种方案他们都懒得试了，只是做了性能测试，并认为它不会满足要求4。
+
+## 流行的缓存实现
+
+### [bigcache](https://github.com/allegro/bigcache)
+
+`bigcache` 对先对 key hash 分配到不同的 shard 中，shard 的数量可配置（默认1024）。每个 shard 有一个 ring buffer 实际存储数据，有一个 map 记录 key 对应的 index， 如果同一个 key 被 set 多次，那么前面的 entry 会被置为 invalid。 shard 会在容量不够切且没有到达上限的时候扩容。缓存有生存周期，每个生存周期都会把过期的缓存清除。
+
+### [freecache](https://github.com/coocood/freecache)
+
+`freecache` 将缓存分成256个 segement，每个 segement 有256个 slot，slot 用 ring buffer 存储数据，读写的时候， segement 会上锁。
+
+### [groupcache](https://github.com/golang/groupcache/tree/master/lru)
+
+作者对 `groupcache` 做了二次开发，这就是前面说的 Striped LRU cache 实现。
+
+### 性能比较
+
+![读性能](https://blog.dgraph.io/images/cache_read_workload.svg)
+<center>读性能</center>
+
+![写性能](https://blog.dgraph.io/images/cache_write_workload.svg)
+<center>写性能</center>
+
+![读写性能](https://blog.dgraph.io/images/cache_mixed_workload.svg)
+<center>25%写 75%读情况下性能</center>
+
+就读写性能来说，`bigcache` 表现最好，但是数据测试表示它的命中率有点惨不忍睹。在 Zipf 分布的情况下，缓存数量达到10000000级别的时候，命中率居然可以低到55%。分析有如下两个原因：
+
+1. `bigcache` 没有善用 buffer，往往同一个 key 同时存了多个 entry （写入多次的时候）；
+2. `bigcache` 不会在读的时候更新 entry，所以可能会清退最近访问的 key；
+
+所以，即使是 `bigcache` 也没有符合要求5。
+
+## 扩展阅读
+
+据说 [Caffeine](https://github.com/ben-manes/caffeine) 能满足前面所说的[五条要求](缓存的几点要求), 它采用了 [TinyLFU](https://arxiv.org/abs/1512.00727)。此外还可以参考[Design Of A Modern Cache](http://highscalability.com/blog/2016/1/25/design-of-a-modern-cache.html)。
