@@ -1,7 +1,8 @@
 # Mandatory settings
 
 blog_theme: light # Or use dark
-name: Chalk
+name: 一排胡言
+description: dantezy 的在线栋笃笑
 paginate: 25
 url: https://zhangyet.github.io
 
