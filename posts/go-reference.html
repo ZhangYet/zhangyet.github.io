@@ -1,0 +1,31 @@
+<h1 id="go-语言参考资料">go 语言参考资料</h1>
+
+<p>今年跳了一次槽，期间各种面试，除了算法题之外，还会问一些基础知识，因为主要的技术栈是 <code class="highlighter-rouge">go</code>，所以面试的时候避免不了一些基础问题。</p>
+
+<p>最典型的就是“你对 <code class="highlighter-rouge">goroutine</code> 有什么理解？”</p>
+
+<p>坦白说就是没有什么理解，除了知道它比线程要轻之外。但是为什么比线程轻量也实在说不出。真的挺惭愧的。</p>
+
+<p>所以假期开始补课，跟着<a href="https://book.douban.com/subject/26832468/">《Go语言学习笔记》</a>看源代码，看 <code class="highlighter-rouge">goroutine</code> 的实现部分。看得很痛苦，底层实现的代码非常繁复，代码都是一坨一坨的，更不用说底层的汇编。看了两天之后，只是对 G-M-P 模型有个模糊的理解（比如你现在问我“G、M和P分别是什么？”我不能给出一个很准确的回答，我现在也不清楚 G 和 P 的<a href="http://xargin.com/state-of-goroutine/">状态转移</a>）。只能说这是一个长期学习过程。总的来说，我现在对 <code class="highlighter-rouge">goroutine</code> 的理解并没有超过<a href="https://morsmachine.dk/go-scheduler">这篇博客</a>，除了一点：除了 P 本地的 G 队列之外，还有一个全局的 G 队列，这个 P 在调度 G 的时候，会从全局的队列中抢任务，也会在本地队列过长的时候，把一部分 G 转移到全局队列中。<code class="highlighter-rouge">go</code> 实现 <a href="http://supertech.csail.mit.edu/papers/steal.pdf">work stealing 算法</a>。 这篇 paper 的阅读笔记见<a href="https://gitpress.io/c/dante/work_stealing">《work strealing 算法》</a>。</p>
+
+<p>在阅读 <code class="highlighter-rouge">go</code> 的源代码时，有一个障碍就是底层的汇编语言。如果有时间，需要了解一下 <code class="highlighter-rouge">go</code> 的汇编，有一个<a href="https://golang.org/doc/asm">官方文档</a>。这是我从前公司同事<a href="http://xargin.com/">曹春晖的博客</a>那里知道的，他的博客有很多值得学习的资料（做同事的时候没有好好抱大腿，真是可惜了）。</p>
+
+<p>还有一些平时收集的材料，最近也在持续消化中。</p>
+
+<ul>
+  <li><a href="https://medium.com/@kent.rancourt/go-pointers-why-i-use-interfaces-in-go-338ae0bdc9e4">Why I Use Interface</a> 这篇感觉没啥啊。</li>
+  <li><a href="https://songlh.github.io/paper/go-study.pdf">Understanding Real-World Concurrency Bugs in Go</a></li>
+  <li><a href="https://medium.com/commonbond-engineering/build-a-go-api-eb27e6663d78">Build A Go API</a> 这篇也没啥特别的内容啊。</li>
+  <li><a href="https://github.com/dgryski/go-perfbook">go-perfbook</a></li>
+  <li><a href="https://github.com/golang/go/wiki/Modules">go modules</a> 作为 <code class="highlighter-rouge">go</code> 1.11 引入的新特性，需要了解一下。</li>
+</ul>
+
+<p>另外还需进一步看一些库的实现，累积经验：</p>
+
+<ul>
+  <li><a href="https://github.com/grandecola/bigqueue">bigqueue</a></li>
+  <li><a href="https://github.com/micro/go-micro">go-micro</a></li>
+  <li><a href="https://github.com/buger/goreplay">goreply</a></li>
+</ul>
+
+<p>真是生有涯而知无涯啊，这份工作真是一刻都不得闲。</p>

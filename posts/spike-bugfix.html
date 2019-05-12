@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <title>Chalk | Spike 抓虫记</title>
+  <meta name="description" content="">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <meta property="og:title" content="Spike 抓虫记">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://zhangyet.github.io/posts/spike-bugfix">
+  <meta property="og:description" content="">
+  <meta property="og:site_name" content="Chalk">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:url" content="https://zhangyet.github.io/posts/spike-bugfix">
+  <meta name="twitter:title" content="Spike 抓虫记">
+  <meta name="twitter:description" content="">
+
+  
+    <meta property="og:image" content="https://zhangyet.github.io/assets/og-image-ee46bbc61b334e821e81534b1fd43f3fee6f020ec174b3c2114445695fd48c01.jpg">
+    <meta name="twitter:image" content="https://zhangyet.github.io/assets/og-image-ee46bbc61b334e821e81534b1fd43f3fee6f020ec174b3c2114445695fd48c01.jpg">
+  
+
+  <link href="https://zhangyet.github.io/feed.xml" type="application/rss+xml" rel="alternate" title="Chalk Last 10 blog posts" />
+
+  
+
+  
+
+    
+      <link rel="icon" type="image/x-icon" href="/assets/favicon-light-a98c41efc5ed9fcc06ac664c9e2f7a9b3c3b2e0a52357d221fe382f6f4abc8fc.ico">
+      <link rel="apple-touch-icon" href="/assets/apple-touch-icon-light-87d1f2a3a19b1500e5c1626a0492025ca5f7f97d24540dc5900288e92112925a.png">
+      <link rel="stylesheet" type="text/css" href="/assets/light-b34f12b58415aa3a5f6cf5f4caec8a9f2971a5aba876b1956e66ddb8dc92581f.css">
+    
+
+  
+  
+</head>
+
+<body>
+  <main>
+    <div class="grid grid-centered">
+      <div class="grid-cell">
+        <nav class="header-nav scrollappear">
+  <a href="/" class="header-logo" title="Chalk">Chalk</a>
+  <ul class="header-links">
+    
+    
+      <li>
+        <a href="https://twitter.com/dantezy2814" rel="noreferrer noopener" target="_blank" title="Twitter">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon-twitter">
+  <use href="/assets/twitter-8842c33965263ad1b03a978406826677a668f94125d5837e70ab83f24b3213a7.svg#icon-twitter" xlink:href="/assets/twitter-8842c33965263ad1b03a978406826677a668f94125d5837e70ab83f24b3213a7.svg#icon-twitter"></use>
+</svg>
+
+        </a>
+      </li>
+    
+    
+    
+    
+      <li>
+        <a href="https://github.com/ZhangYet" rel="noreferrer noopener" target="_blank" title="GitHub">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon-github">
+  <use href="/assets/github-094f81040819f34343ee6ffff0980f17e2807b08b595eaaf66ae3554934fd78d.svg#icon-github" xlink:href="/assets/github-094f81040819f34343ee6ffff0980f17e2807b08b595eaaf66ae3554934fd78d.svg#icon-github"></use>
+</svg>
+
+        </a>
+      </li>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+      <li>
+        <a href="mailto:zhangyet@gmail.com" title="Email">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon-email">
+  <use href="/assets/email-782473193bf750036fdb90e8daa075508a20509d01854c09f3237c144a3f0601.svg#icon-email" xlink:href="/assets/email-782473193bf750036fdb90e8daa075508a20509d01854c09f3237c144a3f0601.svg#icon-email"></use>
+</svg>
+
+        </a>
+      </li>
+    
+    
+      <li>
+        <a href="/feed.xml" rel="noreferrer noopener" target="_blank" title="RSS">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon-rss">
+  <use href="/assets/rss-541ec5cea9cefd10d2fcfec01888f3f231a8829940249835fa7b7b3a12ae0d0d.svg#icon-rss" xlink:href="/assets/rss-541ec5cea9cefd10d2fcfec01888f3f231a8829940249835fa7b7b3a12ae0d0d.svg#icon-rss"></use>
+</svg>
+
+        </a>
+      </li>
+    
+    
+  </ul>
+</nav>
+
+        <article class="article scrollappear">
+          <header class="article-header">
+            <h1>Spike 抓虫记</h1>
+            <p></p>
+            <div class="article-list-footer">
+              <span class="article-list-date">
+                October 11, 2016
+              </span>
+              <span class="article-list-divider">-</span>
+              <span class="article-list-minutes">
+                
+                
+                  1 minute read
+                
+              </span>
+              <span class="article-list-divider">-</span>
+              <div class="article-list-tags">
+                
+              </div>
+            </div>
+          </header>
+
+          <div class="article-content">
+            <p><code class="highlighter-rouge">spike</code> 是我实现的一个 <code class="highlighter-rouge">graphite_api</code> 的 proxy .</p>
+
+<p>通过 <code class="highlighter-rouge">graphite_api</code> 查询 <code class="highlighter-rouge">whishper</code> 数据的时候，<code class="highlighter-rouge">query</code> 的形式可能会很复杂，涉及到函数嵌套等问题，所以 <code class="highlighter-rouge">spike</code> 其实只做了一个工作：从线上的 <code class="highlighter-rouge">graphite_api</code> 中读取数据，再调用 <code class="highlighter-rouge">graphite_api</code> 进行下一步的处理。实质上，从 <code class="highlighter-rouge">graphite_api</code> 读取的数据是时间戳－数据值点对，这些数据点对是 <code class="highlighter-rouge">graphite_api</code> 最终处理的结果，<code class="highlighter-rouge">spike</code> 读取这些数据之后，需要对它们作逆映射，转换成 <code class="highlighter-rouge">graphite_api</code> 定义的 <code class="highlighter-rouge">TimeSeries</code> 实例。 总的来说，可以把 <code class="highlighter-rouge">spike</code> 看作一个从其它线上 <code class="highlighter-rouge">whisper</code> 读取数据的 <code class="highlighter-rouge">graphite_api</code> （很惭愧，<code class="highlighter-rouge">spike</code> 只是做了一点微不足道的工作)。</p>
+
+<p>昨天 @wzyboy 跟我提了一个 bug : 同样的查询语句直接查询 <code class="highlighter-rouge">graphite_api</code> 可以正常地获取数据，但是访问 <code class="highlighter-rouge">spike</code> 却会返回500错误。于是我开始排查原因。</p>
+
+<p>这个问题有点诡异，因为我无法在本地复现。错误信息最终定位到 <code class="highlighter-rouge">graphite_api</code> 的 <code class="highlighter-rouge">doDrawImage</code> 函数，我最初想会不会是 <code class="highlighter-rouge">graphite_api</code> 的版本问题。我本地的 <code class="highlighter-rouge">graphite_api</code> 是1.1.2版本，而线上的是1.1.3。于是在依赖里面指定了版本，上了一个新的容器，发现问题并没有解决。</p>
+
+<p>然后我又开了一个 <code class="highlighter-rouge">cell</code> 的测试环境，在上面启动 <code class="highlighter-rouge">spike</code>， 这个 <code class="highlighter-rouge">spike</code> 同样无法复现前面的错误。最后我只能钻进容器里面，找到容器中的 <code class="highlighter-rouge">graphite_api</code> 在可疑的地方插入 <code class="highlighter-rouge">print</code> 排查有错误的地方。</p>
+
+<p>这个错误是发生在 <code class="highlighter-rouge">graphite_api</code> 的 <code class="highlighter-rouge">Graph</code> 类的 <code class="highlighter-rouge">drawText()</code> 函数里面，问题在于 <code class="highlighter-rouge">drawText()</code> 函数被很多别的函数调用了，我不知道它是在哪一个函数调用的时候出的错。最后我是用 <code class="highlighter-rouge">try catch</code> 强行让 <code class="highlighter-rouge">spike</code> “正常”地返回一个结果，再跟正确的结果（之所以可以这样做，是因为这个查询返回的是一个图，对比两个图其实并不难）对比，最后将错误定位到 <code class="highlighter-rouge">drawLabel()</code> 函数里面。这个函数的作用是画出图的横坐标。</p>
+
+<p>定位到错误之后，我发现 <code class="highlighter-rouge">drawLabel()</code> 是用时间来做横坐标的，它会计算适当的时间点（一个 <code class="highlighter-rouge">datetime</code> 对象），然后调用 <code class="highlighter-rouge">strftime("%a %l%p")</code> 转换成字符串。但是线上容器进行到这一步的时候，传了一个空字符串到 <code class="highlighter-rouge">drawText()</code> 导致了函数出错。令我感到奇怪的是，为什么同样的函数调用，再线上会出错呢？我在容器里面开 <code class="highlighter-rouge">python</code> 解释器，发现线上的 <code class="highlighter-rouge">python</code> 就是将 <code class="highlighter-rouge">datetime</code> 对象转换成了空字符串了！</p>
+
+<p>感谢 @wzyboy 他很快告诉我这是 <code class="highlighter-rouge">musl/libc</code> 的<a href="https://github.com/esmil/musl/blob/master/src/time/strptime.c">问题</a>，总的来说，这个 bug 的问题是这样的：线上 <code class="highlighter-rouge">spike</code> 是用 <code class="highlighter-rouge">alpine</code> 作为容器镜像的，而 <code class="highlighter-rouge">alpine</code> 没有用 <code class="highlighter-rouge">glibc</code> 而是用了 <code class="highlighter-rouge">musl/libc</code> 。<code class="highlighter-rouge">musl/libc</code> 不支持 <code class="highlighter-rouge">%l</code> 这种日期格式（WHY！！！！）,最终导致了这个诡异的错误。</p>
+
+<p>找到问题所在，修复就是小菜一碟了，将 <code class="highlighter-rouge">spike</code> 的镜像换回 <code class="highlighter-rouge">centos</code> 就解决了。</p>
+
+          </div>
+          <div class="article-share">
+            
+            
+            <a href="https://twitter.com/home?status=Spike+%E6%8A%93%E8%99%AB%E8%AE%B0%20-%20https://zhangyet.github.io/posts/spike-bugfix%20by%20@dantezy2814" title="Share on Twitter" rel="noreferrer noopener" target="_blank">
+              <svg viewBox="0 0 512 512"><path d="M492 109.5c-17.4 7.7-36 12.9-55.6 15.3 20-12 35.4-31 42.6-53.6 -18.7 11.1-39.4 19.2-61.5 23.5C399.8 75.8 374.6 64 346.8 64c-53.5 0-96.8 43.4-96.8 96.9 0 7.6 0.8 15 2.5 22.1 -80.5-4-151.9-42.6-199.6-101.3 -8.3 14.3-13.1 31-13.1 48.7 0 33.6 17.2 63.3 43.2 80.7C67 210.7 52 206.3 39 199c0 0.4 0 0.8 0 1.2 0 47 33.4 86.1 77.7 95 -8.1 2.2-16.7 3.4-25.5 3.4 -6.2 0-12.3-0.6-18.2-1.8 12.3 38.5 48.1 66.5 90.5 67.3 -33.1 26-74.9 41.5-120.3 41.5 -7.8 0-15.5-0.5-23.1-1.4C62.8 432 113.7 448 168.3 448 346.6 448 444 300.3 444 172.2c0-4.2-0.1-8.4-0.3-12.5C462.6 146 479 129 492 109.5z"/></svg>
+            </a>
+            <a href="https://www.facebook.com/sharer/sharer.php?u=https://zhangyet.github.io/posts/spike-bugfix" title="Share on Facebook" rel="noreferrer noopener" target="_blank">
+              <svg viewBox="0 0 512 512"><path d="M288 192v-38.1c0-17.2 3.8-25.9 30.5-25.9H352V64h-55.9c-68.5 0-91.1 31.4-91.1 85.3V192h-45v64h45v192h83V256h56.4l7.6-64H288z"/></svg>
+            </a>
+            <a href="https://plus.google.com/share?url=https://zhangyet.github.io/posts/spike-bugfix" title="Share on Google+" rel="noreferrer noopener" target="_blank">
+              <svg viewBox="0 0 128 128"><path d="M40.7 55.9v16.1c0 0 15.6 0 22 0C59.2 82.5 53.8 88.2 40.7 88.2c-13.3 0-23.7-10.8-23.7-24.2s10.4-24.2 23.7-24.2c7.1 0 11.6 2.5 15.8 5.9 3.3-3.3 3.1-3.8 11.6-11.9 -7.2-6.6-16.8-10.6-27.4-10.6C18.2 23.3 0 41.5 0 64c0 22.5 18.2 40.7 40.7 40.7 33.6 0 41.8-29.3 39-48.8H40.7zM113.9 56.7V42.6h-10.1v14.1H89.4v10.1h14.5v14.5h10.1V66.8H128V56.7H113.9z"/></svg>
+            </a>
+          </div>
+
+          
+        </article>
+        <footer class="footer scrollappear">
+  <p>
+    Chalk is a high quality, completely customizable, performant and 100% free
+    blog template for Jekyll built by
+    <a href="/about" title="About me">Nielsen Ramon</a>. Download it <a href="https://github.com/nielsenramon/chalk" rel="noreferrer noopener" target="_blank" title="Download Chalk">here</a>.
+  </p>
+</footer>
+
+      </div>
+    </div>
+  </main>
+  
+
+<script src="/assets/vendor-2c224c53eb697c739f9490c38819a72184f09472739fd9e492272ef174090428.js" type="text/javascript"></script>
+
+
+  <script src="/assets/webfonts-96493456d319d1bf419afdf8701552d4d486fee6afd304897d4fd81eb4e0cc0b.js" type="text/javascript"></script>
+
+
+
+  <script src="/assets/scrollappear-e2da8ea567e418637e31266cc5302126eaa79f62a2273739086358b589a89ee6.js" type="text/javascript"></script>
+
+
+<script src="/assets/application-cfde13ac81ddaf4351b2e739603e2baf688d0fcc9aba613fe62bbb1c7b037fb9.js" type="text/javascript"></script>
+
+
+</body>
+</html>

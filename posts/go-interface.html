@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <title>Chalk | go interface 补充说明</title>
+  <meta name="description" content="">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <meta property="og:title" content="go interface 补充说明">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://zhangyet.github.io/posts/go-interface">
+  <meta property="og:description" content="">
+  <meta property="og:site_name" content="Chalk">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:url" content="https://zhangyet.github.io/posts/go-interface">
+  <meta name="twitter:title" content="go interface 补充说明">
+  <meta name="twitter:description" content="">
+
+  
+    <meta property="og:image" content="https://zhangyet.github.io/assets/og-image-ee46bbc61b334e821e81534b1fd43f3fee6f020ec174b3c2114445695fd48c01.jpg">
+    <meta name="twitter:image" content="https://zhangyet.github.io/assets/og-image-ee46bbc61b334e821e81534b1fd43f3fee6f020ec174b3c2114445695fd48c01.jpg">
+  
+
+  <link href="https://zhangyet.github.io/feed.xml" type="application/rss+xml" rel="alternate" title="Chalk Last 10 blog posts" />
+
+  
+
+  
+
+    
+      <link rel="icon" type="image/x-icon" href="/assets/favicon-light-a98c41efc5ed9fcc06ac664c9e2f7a9b3c3b2e0a52357d221fe382f6f4abc8fc.ico">
+      <link rel="apple-touch-icon" href="/assets/apple-touch-icon-light-87d1f2a3a19b1500e5c1626a0492025ca5f7f97d24540dc5900288e92112925a.png">
+      <link rel="stylesheet" type="text/css" href="/assets/light-b34f12b58415aa3a5f6cf5f4caec8a9f2971a5aba876b1956e66ddb8dc92581f.css">
+    
+
+  
+  
+</head>
+
+<body>
+  <main>
+    <div class="grid grid-centered">
+      <div class="grid-cell">
+        <nav class="header-nav scrollappear">
+  <a href="/" class="header-logo" title="Chalk">Chalk</a>
+  <ul class="header-links">
+    
+    
+      <li>
+        <a href="https://twitter.com/dantezy2814" rel="noreferrer noopener" target="_blank" title="Twitter">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon-twitter">
+  <use href="/assets/twitter-8842c33965263ad1b03a978406826677a668f94125d5837e70ab83f24b3213a7.svg#icon-twitter" xlink:href="/assets/twitter-8842c33965263ad1b03a978406826677a668f94125d5837e70ab83f24b3213a7.svg#icon-twitter"></use>
+</svg>
+
+        </a>
+      </li>
+    
+    
+    
+    
+      <li>
+        <a href="https://github.com/ZhangYet" rel="noreferrer noopener" target="_blank" title="GitHub">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon-github">
+  <use href="/assets/github-094f81040819f34343ee6ffff0980f17e2807b08b595eaaf66ae3554934fd78d.svg#icon-github" xlink:href="/assets/github-094f81040819f34343ee6ffff0980f17e2807b08b595eaaf66ae3554934fd78d.svg#icon-github"></use>
+</svg>
+
+        </a>
+      </li>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+      <li>
+        <a href="mailto:zhangyet@gmail.com" title="Email">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon-email">
+  <use href="/assets/email-782473193bf750036fdb90e8daa075508a20509d01854c09f3237c144a3f0601.svg#icon-email" xlink:href="/assets/email-782473193bf750036fdb90e8daa075508a20509d01854c09f3237c144a3f0601.svg#icon-email"></use>
+</svg>
+
+        </a>
+      </li>
+    
+    
+      <li>
+        <a href="/feed.xml" rel="noreferrer noopener" target="_blank" title="RSS">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon-rss">
+  <use href="/assets/rss-541ec5cea9cefd10d2fcfec01888f3f231a8829940249835fa7b7b3a12ae0d0d.svg#icon-rss" xlink:href="/assets/rss-541ec5cea9cefd10d2fcfec01888f3f231a8829940249835fa7b7b3a12ae0d0d.svg#icon-rss"></use>
+</svg>
+
+        </a>
+      </li>
+    
+    
+  </ul>
+</nav>
+
+        <article class="article scrollappear">
+          <header class="article-header">
+            <h1>go interface 补充说明</h1>
+            <p></p>
+            <div class="article-list-footer">
+              <span class="article-list-date">
+                December 9, 2017
+              </span>
+              <span class="article-list-divider">-</span>
+              <span class="article-list-minutes">
+                
+                
+                  1 minute read
+                
+              </span>
+              <span class="article-list-divider">-</span>
+              <div class="article-list-tags">
+                
+              </div>
+            </div>
+          </header>
+
+          <div class="article-content">
+            <p>工作中遇到一个需求：对接口进行个性化配置。</p>
+
+<p>现在的系统设计是这样的，大部分接口都需要返回一个 <code class="highlighter-rouge">arry</code>， 其中的元素是接口自定义的结构体 <code class="highlighter-rouge">XXXApiOutput</code>。最初的想法是做成像 <code class="highlighter-rouge">python</code> 的装饰器一样的实现，后来发现并不现实。退而求其次，希望有一个统一的处理方式，可以减少对接口的侵入式改造。</p>
+
+<p>某个晚上想到的方法就是，针对某些个性化规则，定义 <code class="highlighter-rouge">interface{}</code>，然后处理这些 <code class="highlighter-rouge">interface{}</code>。</p>
+
+<p>举例来说，加入我的个性化规则需要根据 <code class="highlighter-rouge">Uuid</code> 处理。那么我可以定义如下的结构：</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>type UuidHandler interface{
+	GetUuid() string
+}
+
+func Foo(input UuidHander) {
+	// func body
+}
+
+func HandleUuidResource(input []UuidHandler) []UuidHandler {
+	// func body
+}
+</code></pre></div></div>
+
+<p>然后这个计划无情地失败了，这跟我的需求有关，最终发现这种实现方式对我的需求依然有一定距离。当然，最大的问题在于：<strong>对于 <code class="highlighter-rouge">go</code> 函数来说，即使你为 <code class="highlighter-rouge">XXXApiOutput</code> 实现了 <code class="highlighter-rouge">GetUuid </code>方法，<code class="highlighter-rouge">[]XXXApiOutput</code> 和 <code class="highlighter-rouge">[]UuidHandler</code> 依然是不同的类型</strong>。</p>
+
+<p>详细的内容可以参考这篇博文: <a href="https://npf.io/2014/05/intro-to-go-interfaces/">Intro++ to Go Interfaces</a>。</p>
+
+<p>这篇博文为我们提供了一些较为深入的知识：</p>
+
+<ol>
+  <li>假设我们的 <code class="highlighter-rouge">XXXApiOutput</code> 实现了 <code class="highlighter-rouge">GetUuid</code> 方法，而我们有一个函数 <code class="highlighter-rouge">Foo(input UuidHandler)</code>, 当我们传入类型为 <code class="highlighter-rouge">XXXApiOutput</code> 的参数的时候，我们传入了它的值，<code class="highlighter-rouge">go</code> 会根据入参的值，构造出一个 <code class="highlighter-rouge">UuidHandler</code> 的值。</li>
+  <li>然而 <code class="highlighter-rouge">go</code> 并不会把 <code class="highlighter-rouge">[]XXXApiOutput</code> 转换为 <code class="highlighter-rouge">[]UuidHandler</code>（其实我觉得你要是把 arry 理解成元素的集合，你也可以设计成自动转换，但显然，<code class="highlighter-rouge">go</code> 的设计者并不是这样想的。</li>
+  <li>看一个具体的例子，这个例子告诉我们，如果你的方法定义的时候，reciever 是指针，那么你在 <code class="highlighter-rouge">Foo</code> 中也应该传入一个地址。这是因为对于 <code class="highlighter-rouge">Api2Output</code>，你是把 <code class="highlighter-rouge">*Api2Output</code> 这个类型定义成了 <code class="highlighter-rouge">UudiHandler interface</code>。 【但是你可以直接调用 <code class="highlighter-rouge">api2Output.GetUuid()</code> 这是因为 <code class="highlighter-rouge">go</code> 帮你做了转换，这是何等操蛋。】</li>
+</ol>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>type Api1Output struct {}
+
+type Api2Output struct {}
+
+func (this Api1Output) GetUuid() string {
+	// func body
+}
+
+func (this *Api2Output) GetUuid() string {
+	// func body
+}
+
+var api1Output Api1Output
+var api2Output Api2output
+
+Foo(api1Output)
+Foo(&amp;api2Output) // 这里输入的是 &amp;api2Output
+</code></pre></div></div>
+
+          </div>
+          <div class="article-share">
+            
+            
+            <a href="https://twitter.com/home?status=go+interface+%E8%A1%A5%E5%85%85%E8%AF%B4%E6%98%8E%20-%20https://zhangyet.github.io/posts/go-interface%20by%20@dantezy2814" title="Share on Twitter" rel="noreferrer noopener" target="_blank">
+              <svg viewBox="0 0 512 512"><path d="M492 109.5c-17.4 7.7-36 12.9-55.6 15.3 20-12 35.4-31 42.6-53.6 -18.7 11.1-39.4 19.2-61.5 23.5C399.8 75.8 374.6 64 346.8 64c-53.5 0-96.8 43.4-96.8 96.9 0 7.6 0.8 15 2.5 22.1 -80.5-4-151.9-42.6-199.6-101.3 -8.3 14.3-13.1 31-13.1 48.7 0 33.6 17.2 63.3 43.2 80.7C67 210.7 52 206.3 39 199c0 0.4 0 0.8 0 1.2 0 47 33.4 86.1 77.7 95 -8.1 2.2-16.7 3.4-25.5 3.4 -6.2 0-12.3-0.6-18.2-1.8 12.3 38.5 48.1 66.5 90.5 67.3 -33.1 26-74.9 41.5-120.3 41.5 -7.8 0-15.5-0.5-23.1-1.4C62.8 432 113.7 448 168.3 448 346.6 448 444 300.3 444 172.2c0-4.2-0.1-8.4-0.3-12.5C462.6 146 479 129 492 109.5z"/></svg>
+            </a>
+            <a href="https://www.facebook.com/sharer/sharer.php?u=https://zhangyet.github.io/posts/go-interface" title="Share on Facebook" rel="noreferrer noopener" target="_blank">
+              <svg viewBox="0 0 512 512"><path d="M288 192v-38.1c0-17.2 3.8-25.9 30.5-25.9H352V64h-55.9c-68.5 0-91.1 31.4-91.1 85.3V192h-45v64h45v192h83V256h56.4l7.6-64H288z"/></svg>
+            </a>
+            <a href="https://plus.google.com/share?url=https://zhangyet.github.io/posts/go-interface" title="Share on Google+" rel="noreferrer noopener" target="_blank">
+              <svg viewBox="0 0 128 128"><path d="M40.7 55.9v16.1c0 0 15.6 0 22 0C59.2 82.5 53.8 88.2 40.7 88.2c-13.3 0-23.7-10.8-23.7-24.2s10.4-24.2 23.7-24.2c7.1 0 11.6 2.5 15.8 5.9 3.3-3.3 3.1-3.8 11.6-11.9 -7.2-6.6-16.8-10.6-27.4-10.6C18.2 23.3 0 41.5 0 64c0 22.5 18.2 40.7 40.7 40.7 33.6 0 41.8-29.3 39-48.8H40.7zM113.9 56.7V42.6h-10.1v14.1H89.4v10.1h14.5v14.5h10.1V66.8H128V56.7H113.9z"/></svg>
+            </a>
+          </div>
+
+          
+        </article>
+        <footer class="footer scrollappear">
+  <p>
+    Chalk is a high quality, completely customizable, performant and 100% free
+    blog template for Jekyll built by
+    <a href="/about" title="About me">Nielsen Ramon</a>. Download it <a href="https://github.com/nielsenramon/chalk" rel="noreferrer noopener" target="_blank" title="Download Chalk">here</a>.
+  </p>
+</footer>
+
+      </div>
+    </div>
+  </main>
+  
+
+<script src="/assets/vendor-2c224c53eb697c739f9490c38819a72184f09472739fd9e492272ef174090428.js" type="text/javascript"></script>
+
+
+  <script src="/assets/webfonts-96493456d319d1bf419afdf8701552d4d486fee6afd304897d4fd81eb4e0cc0b.js" type="text/javascript"></script>
+
+
+
+  <script src="/assets/scrollappear-e2da8ea567e418637e31266cc5302126eaa79f62a2273739086358b589a89ee6.js" type="text/javascript"></script>
+
+
+<script src="/assets/application-cfde13ac81ddaf4351b2e739603e2baf688d0fcc9aba613fe62bbb1c7b037fb9.js" type="text/javascript"></script>
+
+
+</body>
+</html>

@@ -1,28 +1,1555 @@
----
-layout: nil
----
-
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
- <title>{{ site.title }}</title>
- <link href="{{ site.url }}atom.xml" rel="self"/>
- <link href="{{ site.url }}/"/>
- <updated>{{ site.time | date_to_xmlschema }}</updated>
- <id>{{ site.url }}</id>
+ <title></title>
+ <link href="https://zhangyet.github.ioatom.xml" rel="self"/>
+ <link href="https://zhangyet.github.io/"/>
+ <updated>2019-05-12T13:23:04+08:00</updated>
+ <id>https://zhangyet.github.io</id>
  <author>
-   <name>{{ site.author.name }}</name>
-   <email>{{ site.author.email }}</email>
+   <name></name>
+   <email></email>
  </author>
 
- {% for post in site.posts %}
+ 
  <entry>
-   <title>{{ post.title }}</title>
-   <link href="{{ site.url }}{{ post.url }}"/>
-   <updated>{{ post.date | date_to_xmlschema }}</updated>
-   <id>{{ site.url }}{{ post.id }}</id>
-   <content type="html">{{ post.content | xml_escape }}</content>
+   <title>写一个 FIX 模拟器</title>
+   <link href="https://zhangyet.github.io/posts/fix-simulator"/>
+   <updated>2019-04-25T12:31:10+08:00</updated>
+   <id>https://zhangyet.github.io/posts/fix_simulator</id>
+   <content type="html">&lt;p&gt;来到新公司两周了，第一周时间是看代码，然后设计一个 FIX 模拟器。这周开始写。&lt;/p&gt;
+
+&lt;p&gt;写了5个工作日之后，项目初步成型。这个项目主要的难点有几个：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;&lt;a href=&quot;https://www.onixs.biz/fix-dictionary.html&quot;&gt;FIX 协议&lt;/a&gt;比较操蛋，这个协议定义了证券买卖的标准通信协议，定义了各种操作的 message，每种 message 有自己的 field， 不同的 field 有不同的类型与合法值。&lt;/li&gt;
+  &lt;li&gt;整个调用流程比较复杂，看了两个项目的代码，其中有一个项目还是 C++ 的，订单状态比较复杂。&lt;/li&gt;
+  &lt;li&gt;要写的项目跟上游项目的对接还不熟悉。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;主要的任务是扩展 FIX 协议的语法，扩展 FIX 协议的描述（因为我们用的协议在标准 FIX 协议基础上定义了更多了条件）。&lt;/p&gt;
+
+&lt;p&gt;最后确定基于 &lt;a href=&quot;https://github.com/quickfixgo/quickfix&quot;&gt;quickfixgo&lt;/a&gt; 实现，之所以选这个，是因为 quickfix 的 C++ 实现没办法在 Mac 上编译，另外我对 go 比较熟。主要的开发工作就两块：在 FIX 标准协议的基础上，扩展 conditional required 的语义（每个 field 在 message 里面，分 required/optional/conditional required， required 要求该 message 必须带某个 field， conditional required 要求如果 message 某些 field 设置了特殊的值，则该 field 是 required）；在扩展的基础上，增加校验 message 的逻辑。&lt;/p&gt;
+
+&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;quickfixgo&lt;/code&gt; 的代码里面，对 message 的校验由一个 interface &lt;code class=&quot;highlighter-rouge&quot;&gt;Validator&lt;/code&gt; 完成。所以最初的时候，我以为只需要实现一个新的 interface 就行了。没想到大意了，这个 Validator 会在 &lt;code class=&quot;highlighter-rouge&quot;&gt;quickfixgo&lt;/code&gt; 初始化 session （关于 session 我们以后可能还要再讨论一下）的时候，初始化赋值给 session，问题就是 session 是一个私有域。我没有什么办法替换它。我同事建议我直接在 vendor 里面改——当然其实我最初的想法是找类似 &lt;a href=&quot;https://en.wikipedia.org/wiki/Monkey_patch&quot;&gt;monkey patching&lt;/a&gt; 的办法，这个大概可以花两到三天吧。&lt;/p&gt;
+
+&lt;p&gt;第一天扩展了协议的 Spec。主要的开发在 &lt;code class=&quot;highlighter-rouge&quot;&gt;quickfixgo&lt;/code&gt; datadictionary 的 Parse 方法上。我写了一个单元测试，但是有一个地方一直不能通过测试：field 的 required 字段一直读不对，打了断点之后发现，读到对应的 field 的时候，还是正确的，但读下一个 message 的时候，这个值莫名其妙地变了。我看这个字段其实是一个指针，所以怀疑它在别的地方别改写了。花了很久，才明白到我搞错了。&lt;/p&gt;
+
+&lt;p&gt;如前所述，FIX 协议在 &lt;code class=&quot;highlighter-rouge&quot;&gt;quickfixgo&lt;/code&gt; 用一个 xml 文件描述，这个文件其实分了好几部分，其中一部分是 field 的定义，这部分定义了 field 的 name 和 tag ，还有对应的值的类型（字符串？还是数值？还是日期？），以及有效的取值范围，这部分对应 fieldType ，另一部分就是 message 的定义，每个 message 会有具体的 field 的定义，这部分对应 fieldDef。&lt;/p&gt;
+
+&lt;p&gt;我的问题就在于我把 required 字段定义在 fieldType 部分了，这部分其实是所有 message 都共用的指针，所以在我的测试里，后面的 message 里面的 fieldDef 会覆盖 required 字段。&lt;/p&gt;
+
+&lt;p&gt;第二天开始整合代码，然后把模拟器的实例跑起来（当然，能编译过我们就算是能跑起来了）。但是编译过程也有一点问题，首先第一个就是，我用了 &lt;code class=&quot;highlighter-rouge&quot;&gt;go mod&lt;/code&gt;，而 &lt;code class=&quot;highlighter-rouge&quot;&gt;quickfixgo&lt;/code&gt; 的代码，我是通过 &lt;code class=&quot;highlighter-rouge&quot;&gt;go mod vendor&lt;/code&gt; 拉到本地的 vendor 文件夹，然后在文件夹里面修改的。这样当我要加一个新的依赖，并且更新 vendor 的时候， &lt;code class=&quot;highlighter-rouge&quot;&gt;quickfixgo&lt;/code&gt; 的修改就白费了。所以最后决定把 &lt;code class=&quot;highlighter-rouge&quot;&gt;quickfixgo&lt;/code&gt; fork 到我们的代码库里面，既然都魔改了，就魔改到底吧，豁出去了。周二周三就忙活干这个了，最后和上游系统打通了。&lt;/p&gt;
+
+&lt;p&gt;周四和周五都在想办法校验 message。这里的难点又回到第一点：这个协议实在太麻烦了。我首先在 &lt;code class=&quot;highlighter-rouge&quot;&gt;quickfixgo&lt;/code&gt; 里面增加了 Validator 的单元测试，改了我增加的 Validator 的 bug （有个比较低级的错误我需要说明一下，&lt;code class=&quot;highlighter-rouge&quot;&gt;quickfixgo&lt;/code&gt; 里面有两个 Validator 实现，一个叫 FixtValidator, 另一个叫 FixValidator，前者是为了兼容 1.1 版本的 Fix 协议实现的，而我偏偏在这个实现那里加了逻辑。幸好我开发的时候遵循了它的规范，改正这个错误没有太多问题）。然后我做了一个工具，希望可以通过日志里面的 message 解析出一个可读的版本。这个工具写起来当然不难，问题出在：message 是用 ‘\001’ 分割不同的 field 的，如果我把日志里面的 message 粘贴到别的文件里面，这个分隔符就会丢掉，然后我就会获得一个 &lt;code class=&quot;highlighter-rouge&quot;&gt;out of index&lt;/code&gt; panic。所以周五为这个 FIX 模拟器加一个 logger 将 message 输出到文件里面。目前想到，它还可以配合模板，输出一个完整的函数，从日志里面的 message 里面还原创建 message 的代码。&lt;/p&gt;
+
+&lt;p&gt;这就是我在新公司的第一个项目。总结如下：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;金融领域的协议好复杂。&lt;/li&gt;
+  &lt;li&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;go mod&lt;/code&gt; 很好用。&lt;/li&gt;
+  &lt;li&gt;项目小就是有好处，随时拆分，随时创建新的项目都方便。&lt;/li&gt;
+  &lt;li&gt;领域知识真是必不可少啊。&lt;/li&gt;
+&lt;/ol&gt;
+</content>
  </entry>
- {% endfor %}
+ 
+ <entry>
+   <title>读书有什么用呢？</title>
+   <link href="https://zhangyet.github.io/posts/why-reading"/>
+   <updated>2019-04-20T02:35:48+08:00</updated>
+   <id>https://zhangyet.github.io/posts/why_reading</id>
+   <content type="html">&lt;p&gt;不知道什么时候开始，我非常讨厌我父亲问我“这有什么用？”&lt;/p&gt;
+
+&lt;p&gt;他问这个问题的时候，我一般都在干没啥用的事情，比如玩游戏、比如买手办，又比如看乱七八糟的书。我真的无言以对。&lt;/p&gt;
+
+&lt;p&gt;但我不能不读书。&lt;/p&gt;
+
+&lt;p&gt;小时候我没有玩伴，也没有什么娱乐手段，玩具很少（有过），更不用说游戏机了。读书是我能找到性价比最好的娱乐工具了。我人生第一本书是一本《钢铁是怎样炼成的》，这本书我读过很多次，即使是这样一本书，也曾经带给我很多乐趣。&lt;/p&gt;
+
+&lt;p&gt;但到了今天，我也不得不承认，读书其实没有什么用：我没有发财，也找不到女朋友，即使我加入了一个读书群，我也无法在里面吸引到异性。如今我有PS4和NS了，我并不缺娱乐手段。有些时候我在想，我之所以坚持读书，只是一种长年累月的习惯使然。假如将“读书”这件事人格化，它大概会变成黄子华，面对我的责问，颓废地说：“系咁噶啦，好出奇啊？”&lt;/p&gt;
+
+&lt;p&gt;只是最近我在读一本书&lt;a href=&quot;https://book.douban.com/subject/1831446/&quot;&gt;《塑造工业时代》&lt;/a&gt;，恰好马云说了“996是福报”那段狗屎，我忽然顿悟了：虽然不能帮我发财，但读书可以让我避免一些低级错误，就是说，它无法提高我的上限，好歹提高了我的下限。&lt;/p&gt;
+
+&lt;p&gt;我的朋友阿北说，很少有人读那么多书气质还像我那样（猥琐、低级）。我觉得他说得对，值得斟酌的是：其实我读的书并不多。我只能说，读书真的没有什么用，科学工程的前沿都在论文文档和源代码里面，读书不能给人成长。当曳尾涂中的乌龟是很快乐的，明白自己其实不如乌龟也是一种坦诚。对我自己最准确的描述应该是泥潭里打滚的猪，而且这只猪有一点小聪明，它知道屠刀将至，因而日夜忧虑。&lt;/p&gt;
+
+&lt;p&gt;所以别问我“为什么要读书”了，爱读读，不读滚。&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>《塑造工业时代》书评</title>
+   <link href="https://zhangyet.github.io/posts/shaping-the-industrial-century"/>
+   <updated>2019-04-18T23:32:38+08:00</updated>
+   <id>https://zhangyet.github.io/posts/shaping_the_industrial_century</id>
+   <content type="html">&lt;h2 id=&quot;第一章-差异概念主题和方法&quot;&gt;第一章 差异、概念、主题和方法&lt;/h2&gt;
+
+&lt;p&gt;本书主要回顾制药与化学工业的发展，并与消费电子工业与计算机工业（因为作者另外一部作品就是 &lt;a href=&quot;https://www.goodreads.com/book/show/577718.Inventing_the_Electronic_Century&quot;&gt;Inventing the Electronic Century&lt;/a&gt;)作比较。尽管两个产业存在较多的差异，但是它们有着相同的商品化方式：&lt;strong&gt;借助积累的学识及时创建进入现有市场的强大壁垒&lt;/strong&gt;。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;在市场经济中，工业企业的竞争力取决于学习组织能力&lt;/strong&gt;。在工业企业里，组织学习的过程基于&lt;strong&gt;技术、功能和管理&lt;/strong&gt;创建组织能力实现的。&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;技术能力：是学习的产物，而学习是应用已有和新的科学和工程创造新技术，并且新产品和新方法从中能被商品化的过程。（RD 研发中的 R）&lt;/li&gt;
+  &lt;li&gt;功能能力：以产品能力，涉及开发能力（RD 中的 D）、生产能力以及营销和分配能力。本书其中一个主题就是分析技术能力与功能能力之间的演化关系。&lt;/li&gt;
+  &lt;li&gt;管理能力：是创造和支撑一个盈利性企业的活力所必需的。&lt;strong&gt;成功维持企业长期健康和增长最本质的要点是最高层的学习能力&lt;/strong&gt;。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;企业的演进集中在三个基本主题：&lt;strong&gt;创建进入壁垒、确定企业的战略边界以及评价产业和处于其中的企业的增长限度&lt;/strong&gt;。&lt;/p&gt;
+
+&lt;p&gt;本书主要研究方法是聚焦欧美的第一推动者（确立产业演进方向创造进入壁垒的企业）及其紧密跟随者的相应成败上。本书研究结果的一些重要结论如下：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;公司战略决定成败。&lt;/li&gt;
+  &lt;li&gt;高技术产业要花费数十年时间才能形成。&lt;/li&gt;
+  &lt;li&gt;高技术公司除了可能遇到增长限度之外，还可能遇到认知限制。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h2 id=&quot;认知的演进路径&quot;&gt;认知的演进路径&lt;/h2&gt;
+
+&lt;p&gt;本章是欧美化工与制药企业的编年简史，相当乏味。&lt;/p&gt;
+
+</content>
+ </entry>
+ 
+ <entry>
+   <title>Emacs extension 开发入门</title>
+   <link href="https://zhangyet.github.io/posts/emacs-extension"/>
+   <updated>2019-04-18T11:06:28+08:00</updated>
+   <id>https://zhangyet.github.io/posts/emacs_extension</id>
+   <content type="html">&lt;p&gt;&lt;a href=&quot;https://book.douban.com/subject/1432819/&quot;&gt;Writing GNU Emacs Extensions&lt;/a&gt; 一书1997年就出版了，可能是我孤陋寡闻，至今没有其他相关书籍。这是很可惜的一件事。这本书有些内容已经过时了。&lt;/p&gt;
+
+&lt;p&gt;其实我从15年就开始读这本书了但是一直没有读完，17年跳槽之后，就开始用 goland 进行日常的开发，之后一直没有怎么用 Emacs 了。最近重新看 C++ 的代码加之写了一个 vs code 插件，所以想重拾旧梦。但很讽刺的是，这篇博文还是用 vs code 写的。&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>FIX 简介</title>
+   <link href="https://zhangyet.github.io/posts/fix-intro"/>
+   <updated>2019-04-16T10:04:43+08:00</updated>
+   <id>https://zhangyet.github.io/posts/fix_intro</id>
+   <content type="html">&lt;h2 id=&quot;概念与名词&quot;&gt;概念与名词&lt;/h2&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;MPID: market participant identifiers.&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://www.investopedia.com/terms/o/order_audit_trail_system.asp&quot;&gt;OATS&lt;/a&gt;: Order Audit Trail System.&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://www.investopedia.com/terms/m/multilegorder.asp&quot;&gt;Multi-leg&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://en.wikipedia.org/wiki/Option_symbol&quot;&gt;Option symbol&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>在数字化社会独善其身</title>
+   <link href="https://zhangyet.github.io/posts/digital-minimalism"/>
+   <updated>2019-04-15T01:53:19+08:00</updated>
+   <id>https://zhangyet.github.io/posts/digital_minimalism</id>
+   <content type="html">&lt;p&gt;本文是 &lt;a href=&quot;https://book.douban.com/subject/30374975/&quot;&gt;Digital minimalism&lt;/a&gt; 的摘要书评。&lt;/p&gt;
+
+&lt;h2 id=&quot;基本&quot;&gt;基本&lt;/h2&gt;
+
+&lt;h3 id=&quot;境况&quot;&gt;境况&lt;/h3&gt;
+
+&lt;p&gt;数字化社会（特别是 facebook 和 iPhone 兴起之后的移动化社会）带给我们最大的问题不是用处，而是自主权。所有的网站和应用，都在加剧人类的”网瘾“（原文是 bahavioral addiction 我简化为带引号的网瘾）。大公司主要利用间歇性非预期的正反馈和对社交赞赏的驱动（inttermittent positive reinforcement and the drive for social approval) 这两种因素来吸引用户的注意力，加剧”网瘾“。&lt;/p&gt;
+
+&lt;h3 id=&quot;数字极简主义&quot;&gt;数字极简主义&lt;/h3&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;数字极简主义： 一种科技哲学，你只在少数精心挑选过的网络活动上倾注集中精神的时间，这些网络活动能有力支持你所看重的东西。除此之外的东西，你都愉悦地舍弃掉。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;三条原则：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;Clutter is costly.&lt;/li&gt;
+  &lt;li&gt;Optimization is important.&lt;/li&gt;
+  &lt;li&gt;Intentionality is satisfying.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h3 id=&quot;如何成为网络极简主义者&quot;&gt;如何成为网络极简主义者&lt;/h3&gt;
+
+&lt;p&gt;两个步骤：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;三十天戒断；&lt;/li&gt;
+  &lt;li&gt;重新选择所需的技术产品——标准：是否与我们的 value 密切相关，重新思考科技产品与我们之间的关系，思考如何运用科技产品；&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h2 id=&quot;实践&quot;&gt;实践&lt;/h2&gt;
+
+&lt;h3 id=&quot;独处&quot;&gt;独处&lt;/h3&gt;
+
+</content>
+ </entry>
+ 
+ <entry>
+   <title>我们为什么要反对996</title>
+   <link href="https://zhangyet.github.io/posts/anti-996"/>
+   <updated>2019-04-13T10:55:19+08:00</updated>
+   <id>https://zhangyet.github.io/posts/anti_996</id>
+   <content type="html">&lt;p&gt;去深圳的高铁上，我突发奇想写了一篇&lt;a href=&quot;https://www.douban.com/note/713820435/&quot;&gt;《我们需要怎样的管理》&lt;/a&gt;，然后想从“员工总是想摸鱼”出发，写一篇《摸鱼管理学》。&lt;/p&gt;
+
+&lt;p&gt;然而没有写成，因为我本来计划是写成嬉笑怒骂的娱乐文章——众所周知，我的白日梦是做黄子华的继承人。但是我想了一下，觉得“员工总是想摸鱼”是一个严谨的前提，从一个严谨的前提出发，经过缜密的思考，得到的东西，只能是严肃的东西。要把严肃的东西写得搞笑，我做唔到咯。&lt;/p&gt;
+
+&lt;p&gt;对996的辩护有若干种，比如说“996是自由选择，是你愿打我愿挨”，对此的反驳有两点：1. 如果是在“加班”和“失业”之间选，那不是真正的自由，就好像芮阿让没有不偷面包的自由；2. 如果真的是一种自由选择，为什不白纸黑字把996写在合同上，作为一个选择条款？也有一种说法是“程序员的薪酬虚高，得996才能补回来”，说这话的朋友，假如你是一个老板，不如你试试降薪啦？省点钱。假如你不是，你不妨去内网发个贴，“我司程序员薪酬虚高，呼吁降薪！”，记得匿名——当然我这是在诡辩啦。还有一种说法是，“其他职业辛苦得多啦，比如医生（他们的工作更有意义），怎么不见他们抱怨？”对此我觉得，首先在一个普遍吔屎的世界，你不能因为某些人吔了更多屎就否认其他人吔屎。其次，我认为医生们以及其他劳动更辛苦的人们，应该加钱，应该活得更好。&lt;/p&gt;
+
+&lt;p&gt;为什么要反对996呢。&lt;strong&gt;反对996，不在于加钱，而在于争取自由，争取更多的选择权&lt;/strong&gt;。知乎有一个&lt;a href=&quot;https://www.zhihu.com/question/319774219/answer/649355847&quot;&gt;答案&lt;/a&gt;说得很好，一语中的。这个时代其实是充满不安的，时代的大潮起起落落，东北的工人会下岗，美国的银行会倒闭，IT企业会裁员。仔细思考一下你会发觉，（在时代里面）人的力量是有限的，所以，&lt;del&gt;Jojo, 我唔做人啦！&lt;/del&gt;所以我们应该做一点事，让这个世界变得更好。须知，在这个时代，除非你做的是创造性工作、或者你有足够的资本又或者，你有足够强大的人脉关系，否则你是无法避免失业的风险。&lt;/p&gt;
+
+&lt;p&gt;其实我们为什么要996呢，是因为996可以让公司成功吗？大清帝国四万万人，绝大部分快007啦，大清还不是被列强轮个遍？&lt;a href=&quot;https://www.zhihu.com/question/318811980/answer/645651598&quot;&gt;八里桥之战&lt;/a&gt;已经不是努力，是拼命啦，还不是输。996只是加大时间投入，产出最多线性增长，怎样面对这个指数级别复杂度的世界？一个公司的成功是因为它面对市场的时候，作出了正确的反应，而不是996。归根到底，996就是“&lt;strong&gt;欲练神功，必先自宫，即使自宫，未必成功&lt;/strong&gt;”。既然如此，何苦来哉？&lt;/p&gt;
+
+&lt;p&gt;作为一个悲观的人，我觉得 996icu 运动最后会不了了之。如果幸运的话，它会在历史长河荡起涟漪，余波一直回荡直到新的共鸣。但正所谓，&lt;strong&gt;大丈夫行事，论是非，不论利害；论顺逆，不论成败；论万世，不论一生。&lt;/strong&gt;有时候有些明知没有什么用的事情也应该要去做，正如卡尔维诺所说：“&lt;a href=&quot;https://book.douban.com/subject/26390012/&quot;&gt;我们就是以浪费自我的方式对抗着世界上普遍的浪费。&lt;/a&gt;”&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>go modules 简介</title>
+   <link href="https://zhangyet.github.io/posts/go-mod-introduction"/>
+   <updated>2019-04-08T20:02:49+08:00</updated>
+   <id>https://zhangyet.github.io/posts/go_mod_introduction</id>
+   <content type="html">&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;go&lt;/code&gt; 1.11 引入了 &lt;a href=&quot;https://github.com/golang/go/wiki/Modules&quot;&gt;modules&lt;/a&gt; 这个特性。本文是该文档的摘要笔记。&lt;/p&gt;
+
+&lt;h2 id=&quot;quickstart&quot;&gt;Quickstart&lt;/h2&gt;
+
+&lt;p&gt;官方的 &lt;a href=&quot;https://github.com/golang/go/wiki/Modules#example&quot;&gt;quickstart&lt;/a&gt; 给了一个例子，但是我在编译的时候遇到了错误：&lt;/p&gt;
+
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;go: golang.org/x/text@v0.0.0-20170915032832-14c0d48ead0c: unrecognized import path &lt;span class=&quot;s2&quot;&gt;&quot;golang.org/x/text&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;https fetch: Get https://golang.org/x/text?go-get&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;1: dial tcp 216.239.37.1:443: i/o &lt;span class=&quot;nb&quot;&gt;timeout&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+go: error loading module requirements
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;云栖社区给了一个&lt;a href=&quot;https://yq.aliyun.com/articles/663151&quot;&gt;解决方案&lt;/a&gt;，但是我发现还是不行，最终的解决方案如下：&lt;/p&gt;
+
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;go mod edit &lt;span class=&quot;nt&quot;&gt;-replace&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;golang.org/x/text@v0.0.0-20170915032832-14c0d48ead0c&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;github.com/golang/text@latest
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;这是因为 text 没有语义性版本，所以它的版本号是 &lt;a href=&quot;https://tip.golang.org/cmd/go/#hdr-Pseudo_versions&quot;&gt;pseudo-versions&lt;/a&gt;。&lt;/p&gt;
+
+&lt;h2 id=&quot;概念&quot;&gt;概念&lt;/h2&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;modules&lt;/code&gt;: 不同的 package 组成的一个 versioned unit，简单来说就是一组 package， 但是作为整体带上了 version。 每个 module 都带有&lt;a href=&quot;https://semver.org/&quot;&gt;语义性版本号&lt;/a&gt;。&lt;/li&gt;
+  &lt;li&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;go.mod&lt;/code&gt;: 一个定义了整个 module 的文本文件，有四指令：&lt;code class=&quot;highlighter-rouge&quot;&gt;module&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;require&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;replace&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;exclude&lt;/code&gt;。关于 &lt;code class=&quot;highlighter-rouge&quot;&gt;module&lt;/code&gt;，文档说得很清楚，我不想概括复述了。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;A module declares its identity in its go.mod via the module directive, which provides the module path. The import paths for all packages in a module share the module path as a common prefix. The module path and the relative path from the go.mod to a package’s directory together determine a package’s import path.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;version selection&lt;/code&gt;: 如果你通过 &lt;code class=&quot;highlighter-rouge&quot;&gt;go.mod&lt;/code&gt; 里面的 &lt;code class=&quot;highlighter-rouge&quot;&gt;require&lt;/code&gt; 引入了外部的 module，在 &lt;code class=&quot;highlighter-rouge&quot;&gt;go build&lt;/code&gt; 的时候，&lt;code class=&quot;highlighter-rouge&quot;&gt;go.mod&lt;/code&gt; 会自动选择最高的版本。假如你引入了某个 module A 要求它的版本是 v1.0.0。后来你再引入龄一个 module B，B 依赖于 v1.2.0 的 A，那么会根据最小版本原则，选择 v1.0.0。&lt;strong&gt;这里我想吐槽一句，假如依赖的版本不兼容又不遵守 semver 的规范呢（比如上例中 A 的 v1.0.0 和 v1.2.0 有不兼容的版本，而我们又必须同时依赖 A 和 B 呢）？&lt;/strong&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;semantic import versioning&lt;/code&gt;: 就是说，module 必须遵循 &lt;a href=&quot;https://semver.org/&quot;&gt;semver&lt;/a&gt;, v2 必须在 &lt;code class=&quot;highlighter-rouge&quot;&gt;go.mod&lt;/code&gt; 的 &lt;code class=&quot;highlighter-rouge&quot;&gt;module&lt;/code&gt; 中说明。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h2 id=&quot;如何使用-module&quot;&gt;如何使用 module&lt;/h2&gt;
+
+&lt;h3 id=&quot;定义-module&quot;&gt;定义 module&lt;/h3&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;如果项目目录在 &lt;code class=&quot;highlighter-rouge&quot;&gt;GOPATH&lt;/code&gt; 之外，那么不需要特别操作，如果在 &lt;code class=&quot;highlighter-rouge&quot;&gt;GOPATH&lt;/code&gt; 内，需要 &lt;code class=&quot;highlighter-rouge&quot;&gt;export GO111MODULE=on&lt;/code&gt;。如果不加，会提示 &lt;code class=&quot;highlighter-rouge&quot;&gt;go: modules disabled inside GOPATH/src by GO111MODULE=auto; see 'go help modules'&lt;/code&gt;。&lt;/li&gt;
+  &lt;li&gt;创建 module 定义，&lt;code class=&quot;highlighter-rouge&quot;&gt;go mod init&lt;/code&gt;，这一步会把现有的依赖文件（&lt;a href=&quot;https://tip.golang.org/pkg/cmd/go/internal/modconv/?m=all#pkg-variables&quot;&gt;支持的格式&lt;/a&gt;）中的依赖项加到 &lt;code class=&quot;highlighter-rouge&quot;&gt;go.mod&lt;/code&gt; 文件里面。&lt;code class=&quot;highlighter-rouge&quot;&gt;init&lt;/code&gt; 命令可以根据 VCS 的信息，确定 module 路径，也可以自定义 module 路径，比如：&lt;code class=&quot;highlighter-rouge&quot;&gt;go mod init github.com/my/repo&lt;/code&gt;。&lt;/li&gt;
+  &lt;li&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;go build ./... &amp;amp;&amp;amp; go test ./...&lt;/code&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h3 id=&quot;依赖升级和降级&quot;&gt;依赖升级和降级&lt;/h3&gt;
+
+&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;go get&lt;/code&gt; 会自动修改 &lt;code class=&quot;highlighter-rouge&quot;&gt;go.mod&lt;/code&gt;。实际上，&lt;code class=&quot;highlighter-rouge&quot;&gt;go build&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;go test&lt;/code&gt; 甚至 &lt;code class=&quot;highlighter-rouge&quot;&gt;go list&lt;/code&gt; 都会自动增加新依赖。&lt;/p&gt;
+
+&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;go get&lt;/code&gt; 的几种情况（注意这些命令不但会更新 foo，还会更新 foo 的依赖）：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;go get -u foo&lt;/code&gt; 使用最新的 minor 或 patch 版本；&lt;/li&gt;
+  &lt;li&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;go get -u=patch foo&lt;/code&gt; 使用最新的 patch 版本；&lt;/li&gt;
+  &lt;li&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;go get foo&lt;/code&gt; 使用最新版本；&lt;/li&gt;
+  &lt;li&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;go get foo@e3702bed2&lt;/code&gt; 和 &lt;code class=&quot;highlighter-rouge&quot;&gt;go get foo@'&amp;lt;v1.6.2'&lt;/code&gt; 使用指定版本；&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;没有时候用语义版本的 module 会使用 &lt;a href=&quot;https://tip.golang.org/cmd/go/#hdr-Pseudo_versions&quot;&gt;pseudo-versions&lt;/a&gt;。&lt;/p&gt;
+
+&lt;h3 id=&quot;release-module&quot;&gt;release module&lt;/h3&gt;
+
+&lt;p&gt;一般的发布就是&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;go mod tidy&lt;/code&gt;，因为其他会改动 &lt;code class=&quot;highlighter-rouge&quot;&gt;go.mod&lt;/code&gt; 的命令都不会删除不用的依赖;&lt;/li&gt;
+  &lt;li&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;go test all&lt;/code&gt;，;&lt;/li&gt;
+  &lt;li&gt;将 &lt;code class=&quot;highlighter-rouge&quot;&gt;go.sum&lt;/code&gt; 加到库里;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;但是如果要发布的版本是 v2 以上，那就有点麻烦了。主要有一点：如果你的项目是从 v2.0.0 或以上的版本，开始用 module，那么最好把主版本号加1。原因是：&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;Incrementing the major version in this case provides greater clarity to consumers of foo, allows for additional non-module patches or minor releases on the v2 series of foo if needed, and provides a strong signal for a module-based consumer of foo that different major versions result if you do import “foo” and a corresponding require foo v2.2.2+incompatible, vs. import “foo/v3” and a corresponding require foo/v3 v3.0.0.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;有两种发布方式：主分支发布，或者增加一个版本子目录发布。module path 后面都要加上主版本号。&lt;/p&gt;
+
+&lt;h3 id=&quot;publish-a-release&quot;&gt;publish a release&lt;/h3&gt;
+
+&lt;p&gt;通过打 tag 来发布新版本，tag 应该是 prefix(module) + version。&lt;/p&gt;
+
+&lt;h2 id=&quot;迁移到-module&quot;&gt;迁移到 module&lt;/h2&gt;
+
+&lt;p&gt;如果是 v2 或以后的版本，迁移会需要做更多的考量。&lt;/p&gt;
+
+&lt;p&gt;值得注意的是，如果以前你的文档要求的安装指令是：&lt;code class=&quot;highlighter-rouge&quot;&gt;go get -u&lt;/code&gt;，那你应该去掉 &lt;code class=&quot;highlighter-rouge&quot;&gt;-u&lt;/code&gt;。&lt;/p&gt;
+
+&lt;p&gt;此外还有几个小问题：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;module 引用非 module 依赖：直接用就行，如果依赖是 v2 以上的版本，&lt;code class=&quot;highlighter-rouge&quot;&gt;require&lt;/code&gt; 会在版本号后面加上 &lt;code class=&quot;highlighter-rouge&quot;&gt;+incompatible&lt;/code&gt;。&lt;/li&gt;
+  &lt;li&gt;非 module 引用 module：v2 以下版本没有问题，1.9.7+, 1.10.3+ and 1.11 可以使用 v2 的 module， 之前的版本会要求 module 通过子文件夹的方式发布。&lt;/li&gt;
+&lt;/ol&gt;
+
+</content>
+ </entry>
+ 
+ <entry>
+   <title>QEMU启世录</title>
+   <link href="https://zhangyet.github.io/posts/qemu-in-action"/>
+   <updated>2019-04-08T19:14:50+08:00</updated>
+   <id>https://zhangyet.github.io/posts/qemu_in_action</id>
+   <content type="html">&lt;p&gt;&lt;strong&gt;每个人都有无法实现的梦想。或许是那梦想需要太多时间和金钱，譬如开跑车驰骋，驾飞机翱翔;或许是那梦想太过于离谱，例如与异形进行星球大战，与吸血鬼拼个刺刀见红;或许是那梦想会违反法律，譬如血洗乐园，夜半尾行。但不管能否实现，它们总盘旋在你脑海里，每一天，让你浮想联翩。这就是为什么会有一个上亿美元的产业来帮助人们实现各种光怪陆离的白日梦;这就是为什么会有电子游戏。&lt;/strong&gt; —— 《DOOM 启世录》[注1]&lt;/p&gt;
+
+&lt;p&gt;大家都知道约翰·卡马克和他不朽的作品，他为游戏世界带来的创造性工作是划时代的。今天给大家介绍一些，用 &lt;code class=&quot;highlighter-rouge&quot;&gt;qemu&lt;/code&gt; 创建 &lt;code class=&quot;highlighter-rouge&quot;&gt;dos&lt;/code&gt; 虚拟机并安装 Doom。[注2]&lt;/p&gt;
+
+&lt;h2 id=&quot;安装-qemu&quot;&gt;安装 qemu&lt;/h2&gt;
+
+&lt;p&gt;如今三条腿的牛蛙好找，有软盘的电脑难寻，如果想体验 DOS 我们 需要一个虚拟环境。这里我推荐 &lt;code class=&quot;highlighter-rouge&quot;&gt;qemu&lt;/code&gt;（这当然也是个人爱好，因为 &lt;a href=&quot;https://openresty.org/en/&quot;&gt;openresty&lt;/a&gt; 的作者曾经&lt;a href=&quot;https://www.weibo.com/1834459124/GFOybDY4F&quot;&gt;高度评价 qemu 的作者&lt;/a&gt;）。&lt;/p&gt;
+
+&lt;p&gt;首先我们来安装 &lt;code class=&quot;highlighter-rouge&quot;&gt;qemu&lt;/code&gt;：&lt;/p&gt;
+
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;brew &lt;span class=&quot;nb&quot;&gt;install &lt;/span&gt;qemu
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;安装完成之后，输入 &lt;code class=&quot;highlighter-rouge&quot;&gt;qemu&lt;/code&gt; 然后用 &lt;code class=&quot;highlighter-rouge&quot;&gt;tab&lt;/code&gt; 键补完，你会发现多了一堆命令。 其中：&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt;命令&lt;/th&gt;
+      &lt;th&gt;说明&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;qemu-edid&lt;/td&gt;
+      &lt;td&gt;测试 edid generator 的工具&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;qemu-img&lt;/td&gt;
+      &lt;td&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;qemu&lt;/code&gt; 的磁盘管理工具，可以用来创建 &lt;code class=&quot;highlighter-rouge&quot;&gt;qemu&lt;/code&gt; 镜像&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;qemu-nbd&lt;/td&gt;
+      &lt;td&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;qemu&lt;/code&gt; 的网络块设备服务器&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;qemu-system-*&lt;/td&gt;
+      &lt;td&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;qemu&lt;/code&gt; 启动虚拟机的命令，星号代替不同的架构，比如i386和x86_64&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;h2 id=&quot;用-qemu-安装-dos&quot;&gt;用 qemu 安装 dos&lt;/h2&gt;
+
+&lt;p&gt;然后我们来安装 &lt;code class=&quot;highlighter-rouge&quot;&gt;dos&lt;/code&gt;。安装 &lt;code class=&quot;highlighter-rouge&quot;&gt;dos&lt;/code&gt; 有两种方法，一种是选择 &lt;code class=&quot;highlighter-rouge&quot;&gt;dos&lt;/code&gt; 安装镜像，然后大家复习一下重装 &lt;code class=&quot;highlighter-rouge&quot;&gt;windows&lt;/code&gt; 系统的过程：格式化硬盘、分区、安装、安装不成功重新格式化再来一遍，嗯，非常有挑战性。大家可以下载 &lt;a href=&quot;http://www.freedos.org/download/&quot;&gt;freedos&lt;/a&gt;，它还附带了&lt;a href=&quot;http://wiki.freedos.org/install/&quot;&gt;安装教程&lt;/a&gt;。至于如何使用 &lt;code class=&quot;highlighter-rouge&quot;&gt;qemu&lt;/code&gt; 从头创建一个 &lt;code class=&quot;highlighter-rouge&quot;&gt;dos&lt;/code&gt; 虚拟机，可以参考&lt;a href=&quot;https://opensource.com/article/17/10/run-dos-applications-linux&quot;&gt;这篇文章&lt;/a&gt;（总的来说就是先用 &lt;code class=&quot;highlighter-rouge&quot;&gt;qemu-img&lt;/code&gt; 创建一个空的镜像，然后用 &lt;code class=&quot;highlighter-rouge&quot;&gt;qemu-system-i386&lt;/code&gt; 跑起来，模拟用光盘安装 &lt;code class=&quot;highlighter-rouge&quot;&gt;dos&lt;/code&gt; 的过程，但假如你是 mac 用户，记得把这篇文章里面示例中的 &lt;code class=&quot;highlighter-rouge&quot;&gt;-display gtk&lt;/code&gt; 去掉，不要问我为什么会知道，没有故事）。&lt;/p&gt;
+
+&lt;p&gt;但我作为一个良心的攻略制作者，当然会为大家提供“爽到”攻略。这个攻略里面，你只需要按如下步骤操作：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;下载&lt;a href=&quot;https://github.com/palmercluff/qemu-images/tree/master/freedos-1.2&quot;&gt;freedos-1.2.7z&lt;/a&gt; 到你喜欢的目录并解压缩&lt;/li&gt;
+  &lt;li&gt;执行如下命令：&lt;code class=&quot;highlighter-rouge&quot;&gt;qemu-system-i386 -hda freedos-1.2.qcow2 -m 256&lt;/code&gt;[注3]&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;然后你就获得了一个运行中的 &lt;code class=&quot;highlighter-rouge&quot;&gt;dos&lt;/code&gt; 虚拟机了！惊不惊喜，高不高兴？&lt;/p&gt;
+
+&lt;h2 id=&quot;安装-doom&quot;&gt;安装 Doom&lt;/h2&gt;
+
+&lt;p&gt;接下来，我们安装 Doom。&lt;/p&gt;
+
+&lt;p&gt;首先，我们在 &lt;code class=&quot;highlighter-rouge&quot;&gt;freedos-1.2.qcow2&lt;/code&gt; 所在的目录下，创建一个新的目录，目录名随意（以 dosfiles) 为例。&lt;/p&gt;
+
+&lt;p&gt;然后我们下载&lt;a href=&quot;https://www.dosgamesarchive.com/download/doom/&quot;&gt;Doom&lt;/a&gt;，到 dosfiles 目录并解压缩。&lt;/p&gt;
+
+&lt;p&gt;接下来，我们用如下命令启动 &lt;code class=&quot;highlighter-rouge&quot;&gt;dos&lt;/code&gt; 虚拟机（记住，启动之后就不要修改 dosfiles 目录了）。&lt;/p&gt;
+
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;qemu-system-i386 &lt;span class=&quot;nt&quot;&gt;-hda&lt;/span&gt; freedos-1.2.qcow2 &lt;span class=&quot;nt&quot;&gt;-m&lt;/span&gt; 256 &lt;span class=&quot;nt&quot;&gt;-drive&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;file&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;fat:rw:dosfiles/,format&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;raw &lt;span class=&quot;nt&quot;&gt;-boot&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;order&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;c
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;这道命令会让把 dosfiles 目录挂到虚拟机中。在虚拟机中，输入 &lt;code class=&quot;highlighter-rouge&quot;&gt;D:&lt;/code&gt; 进入 D 盘（一个有年代感的词，“阿Sir，我唔用 windows 好多年啦！”）。 &lt;code class=&quot;highlighter-rouge&quot;&gt;dir&lt;/code&gt; 一下，你如看见如下界面：&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;images/doom-install-1.jpg&quot; alt=&quot;安装界面&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;cd DOOM19S&lt;/code&gt; 进入目录，运行 &lt;code class=&quot;highlighter-rouge&quot;&gt;INSTALL.bat&lt;/code&gt;，开始安装过程。&lt;/p&gt;
+
+&lt;p&gt;安装完成之后，你就可以开始你的“毁灭之路”了，猎运亨通！&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;images/doom-install-2.jpg&quot; alt=&quot;DOOM&quot; /&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;[注1] 我想读者已经留意到了，本文标题就是致敬这本书。&lt;/li&gt;
+  &lt;li&gt;[注2] 对于理工科来说，过去的经典是不必再读的（学物理的人不会再去读《自然哲学的数学原理》），但是游戏不一样，即使在画面已经进步了无数个世代，一些伟大的游戏依然能让我们愉悦，让我有所发现，很大原因是：它们的成功是建立在对游戏的本质理解上的。在这种意义上，玩一些旧游戏有“阅读原典”的作用。&lt;/li&gt;
+  &lt;li&gt;[注3] &lt;a href=&quot;https://people.gnome.org/~markmc/qcow-image-format.html&quot;&gt;qcow2 镜像格式&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>《古希腊碑铭体诗歌选》摘抄</title>
+   <link href="https://zhangyet.github.io/posts/greek-poems"/>
+   <updated>2019-04-08T11:53:49+08:00</updated>
+   <id>https://zhangyet.github.io/posts/greek_poems</id>
+   <content type="html">&lt;p&gt;《古希腊碑铭体诗歌选》被收录在&lt;a href=&quot;https://book.douban.com/subject/2127491/&quot;&gt;《罗念生全集：补卷》&lt;/a&gt;中，其中有一些小诗挺有意思，摘录如下。&lt;/p&gt;
+
+&lt;p&gt;”死了丈夫好出门“的希腊版：&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;《最愉快的日子》 女人有两个最愉快的日子/在丈夫迎亲和送葬的时辰。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;俏皮的死亡对话：&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;《咏皮浪》 “你死了没有?”“我怀疑。”“命数已尽,还怀疑吗?”/“我怀疑。”“这坟墓会打消你的怀疑。”&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;一个有气节的吝啬鬼：&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;《气死吝啬鬼》 爱钱的赫蒙在睡眠中浪费了很多金钱,/他感到万分痛苦,自缢而死&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;婚姻的真相：&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;《咏婚姻》 我们观察真相，就会洞悉，/婚姻是祸害，却是必要的祸害。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;纯粹的诗意：&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;《阿多尼斯在冥土的答言》 我留在身后最美好的东西是阳光，/其次是闪烁的星星、清辉的月亮，/还有成熟的黄瓜、甜梨、苹果。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;豁达的亡者：&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;《墓碑》  这是遭海难的水手的坟墓,客人,扬帆吧! /我淹死了,别的船只却安然过海。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;一个好比喻：&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;《咏羊人的雕像》 不是羊人偷偷地钻到青铜里面, /就是艺术使青铜包住羊人。&lt;/p&gt;
+&lt;/blockquote&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>work strealing 算法</title>
+   <link href="https://zhangyet.github.io/posts/work-stealing"/>
+   <updated>2019-04-08T03:04:51+08:00</updated>
+   <id>https://zhangyet.github.io/posts/work_stealing</id>
+   <content type="html">&lt;p&gt;本文是 &lt;a href=&quot;http://supertech.csail.mit.edu/papers/steal.pdf&quot;&gt;Scheduling Multithreaded Computations by Work Stealing&lt;/a&gt; 的笔记，该论文提出了基于 work stealing 思想的线程分配算法。&lt;/p&gt;
+
+&lt;h2 id=&quot;work-stealing-的定义&quot;&gt;work stealing 的定义&lt;/h2&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;strong&gt;Work-sharing&lt;/strong&gt; 产生新线程的时候，进程将已有的线程分配出去。&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Work-stealing&lt;/strong&gt; 利用率低的进程从别的进程那里“偷”线程。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;吐槽，资本主义不但压榨人，也压榨进程。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h2 id=&quot;多线程模型&quot;&gt;多线程模型&lt;/h2&gt;
+
+&lt;p&gt;将多线程计算抽象成一个 &lt;a href=&quot;https://en.wikipedia.org/wiki/Directed_acyclic_graph&quot;&gt;DAG&lt;/a&gt;，每个指令是一个节点，指令的依赖关系构成边，这种边被称为 &lt;em&gt;continue&lt;/em&gt; 边。线程会 spawn 出新的线程，这在图中增加了新类型的边，我们称这种边为 &lt;em&gt;spawn&lt;/em&gt; 边。没有 &lt;em&gt;spawn&lt;/em&gt; 边出去的线程被称为叶子线程。不同的指令之间可能会有数据的依赖，若指令 b 依赖指令 a 的数据，则 a 到 b 存在一条 &lt;em&gt;join&lt;/em&gt; 边。&lt;/p&gt;
+
+&lt;p&gt;一个 &lt;strong&gt;fully strict&lt;/strong&gt; 的计算模型就是所有 &lt;em&gt;join&lt;/em&gt; 边都是从子线程指向父线程（不会从父线程到子线程，也不会从子线程到祖父线程）。&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;子线程、父线程和祖父线程这种说法比较不女权，但是也没有更好的术语用。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h2 id=&quot;the-busy-leaves-property&quot;&gt;the busy-leaves property&lt;/h2&gt;
+
+&lt;p&gt;The &lt;strong&gt;busy-leaves property&lt;/strong&gt;：运行中，every leaf has a  processor working on it.&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;不知道怎样翻译才好。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;The Busy-Leaves Algorithm （后面简称 BL 算法）有几条规则：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;如果线程 a spawn 了线程 b，processor 将 a 放回线程池，开始执行线程 b 的指令。&lt;/li&gt;
+  &lt;li&gt;如果线程 a stalls （等待它依赖的线程的数据），processor 将 a 放回线程池，然后开始闲置。&lt;/li&gt;
+  &lt;li&gt;如果子线程 a 死了，检查它的父线程 b 是否有其他子线程，如果 b 既没有活着的子线程也没有别的 proccessor working on it，那么 proccessor 执行 b，若否， proccessor 闲置。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;strict 的计算模型可以保持 the busy-leaves property。 证明就省下了。但是 BL 算法不够高效。&lt;/p&gt;
+
+&lt;h2 id=&quot;随机化-work-stealing-算法&quot;&gt;随机化 work-stealing 算法&lt;/h2&gt;
+
+&lt;p&gt;首先，每个 proccessor 都会维护一个 dequeue。对 proccessor 来说，这个 dequeue 和 stack 一样，是后进先出的，但是可以在头部移走线程（这样就可以”偷“线程了）。&lt;/p&gt;
+
+&lt;p&gt;WS 算法的规则如下：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;如果线程 a spawn 线程 b，把线程 a 放入 ready queue 的底部， proccessor 开始处理 b 的指令。&lt;/li&gt;
+  &lt;li&gt;如果线程 a stalls，proccessor 检查 ready queue，如果里面有线程，那么取出线程开始处理。如果没有，开始 work stealing：从随机选择的 proccessor 的 queue 的顶部取线程。&lt;/li&gt;
+  &lt;li&gt;如果线程 a 死了，按照规则2的方案走。&lt;/li&gt;
+  &lt;li&gt;如果线程 a enable 了线程 b，线程 b 被放入线程 a 的 proccessor 的 queue 里面。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;定理和证明略。&lt;/p&gt;
+
+&lt;p&gt;剩下的部分都是算法分析和定理证明。略过不看。&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>go 语言参考资料</title>
+   <link href="https://zhangyet.github.io/posts/go-reference"/>
+   <updated>2019-04-07T09:22:18+08:00</updated>
+   <id>https://zhangyet.github.io/posts/go_reference</id>
+   <content type="html">&lt;h1 id=&quot;go-语言参考资料&quot;&gt;go 语言参考资料&lt;/h1&gt;
+
+&lt;p&gt;今年跳了一次槽，期间各种面试，除了算法题之外，还会问一些基础知识，因为主要的技术栈是 &lt;code class=&quot;highlighter-rouge&quot;&gt;go&lt;/code&gt;，所以面试的时候避免不了一些基础问题。&lt;/p&gt;
+
+&lt;p&gt;最典型的就是“你对 &lt;code class=&quot;highlighter-rouge&quot;&gt;goroutine&lt;/code&gt; 有什么理解？”&lt;/p&gt;
+
+&lt;p&gt;坦白说就是没有什么理解，除了知道它比线程要轻之外。但是为什么比线程轻量也实在说不出。真的挺惭愧的。&lt;/p&gt;
+
+&lt;p&gt;所以假期开始补课，跟着&lt;a href=&quot;https://book.douban.com/subject/26832468/&quot;&gt;《Go语言学习笔记》&lt;/a&gt;看源代码，看 &lt;code class=&quot;highlighter-rouge&quot;&gt;goroutine&lt;/code&gt; 的实现部分。看得很痛苦，底层实现的代码非常繁复，代码都是一坨一坨的，更不用说底层的汇编。看了两天之后，只是对 G-M-P 模型有个模糊的理解（比如你现在问我“G、M和P分别是什么？”我不能给出一个很准确的回答，我现在也不清楚 G 和 P 的&lt;a href=&quot;http://xargin.com/state-of-goroutine/&quot;&gt;状态转移&lt;/a&gt;）。只能说这是一个长期学习过程。总的来说，我现在对 &lt;code class=&quot;highlighter-rouge&quot;&gt;goroutine&lt;/code&gt; 的理解并没有超过&lt;a href=&quot;https://morsmachine.dk/go-scheduler&quot;&gt;这篇博客&lt;/a&gt;，除了一点：除了 P 本地的 G 队列之外，还有一个全局的 G 队列，这个 P 在调度 G 的时候，会从全局的队列中抢任务，也会在本地队列过长的时候，把一部分 G 转移到全局队列中。&lt;code class=&quot;highlighter-rouge&quot;&gt;go&lt;/code&gt; 实现 &lt;a href=&quot;http://supertech.csail.mit.edu/papers/steal.pdf&quot;&gt;work stealing 算法&lt;/a&gt;。 这篇 paper 的阅读笔记见&lt;a href=&quot;https://gitpress.io/c/dante/work_stealing&quot;&gt;《work strealing 算法》&lt;/a&gt;。&lt;/p&gt;
+
+&lt;p&gt;在阅读 &lt;code class=&quot;highlighter-rouge&quot;&gt;go&lt;/code&gt; 的源代码时，有一个障碍就是底层的汇编语言。如果有时间，需要了解一下 &lt;code class=&quot;highlighter-rouge&quot;&gt;go&lt;/code&gt; 的汇编，有一个&lt;a href=&quot;https://golang.org/doc/asm&quot;&gt;官方文档&lt;/a&gt;。这是我从前公司同事&lt;a href=&quot;http://xargin.com/&quot;&gt;曹春晖的博客&lt;/a&gt;那里知道的，他的博客有很多值得学习的资料（做同事的时候没有好好抱大腿，真是可惜了）。&lt;/p&gt;
+
+&lt;p&gt;还有一些平时收集的材料，最近也在持续消化中。&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://medium.com/@kent.rancourt/go-pointers-why-i-use-interfaces-in-go-338ae0bdc9e4&quot;&gt;Why I Use Interface&lt;/a&gt; 这篇感觉没啥啊。&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://songlh.github.io/paper/go-study.pdf&quot;&gt;Understanding Real-World Concurrency Bugs in Go&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://medium.com/commonbond-engineering/build-a-go-api-eb27e6663d78&quot;&gt;Build A Go API&lt;/a&gt; 这篇也没啥特别的内容啊。&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/dgryski/go-perfbook&quot;&gt;go-perfbook&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/golang/go/wiki/Modules&quot;&gt;go modules&lt;/a&gt; 作为 &lt;code class=&quot;highlighter-rouge&quot;&gt;go&lt;/code&gt; 1.11 引入的新特性，需要了解一下。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;另外还需进一步看一些库的实现，累积经验：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/grandecola/bigqueue&quot;&gt;bigqueue&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/micro/go-micro&quot;&gt;go-micro&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/buger/goreplay&quot;&gt;goreply&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;真是生有涯而知无涯啊，这份工作真是一刻都不得闲。&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>扒开李嘉诚们的内裤</title>
+   <link href="https://zhangyet.github.io/posts/asian-godfathers"/>
+   <updated>2019-04-05T06:47:55+08:00</updated>
+   <id>https://zhangyet.github.io/posts/asian_godfathers</id>
+   <content type="html">&lt;p&gt;这篇书评相当标题党，我当然对老男人们的胖次不感兴趣，但是这本&lt;a href=&quot;https://book.douban.com/subject/6556296/&quot;&gt;《亚洲教父》&lt;/a&gt;对东南亚富豪的描写，跟扒内裤也差不多了。&lt;/p&gt;
+
+&lt;h2 id=&quot;本书摘要&quot;&gt;本书摘要&lt;/h2&gt;
+
+&lt;p&gt;本书回答的核心问题如下：&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;这些神秘的富豪大亨怎么会统治东南亚的经济？他们对地区整体经济发展有神秘贡献？或许最重要的是，当亚洲金融危机不断加深时，他们为什么仍然那么坚不可摧？&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;对此，本书的回答是：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;大亨是怎样炼成的：&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;东南亚的经济是政治权贵和经济权贵之间关系的产物，这种关系由殖民时代发展而来，并在后殖民地时代继续存在，只是特点有所不同。在这种关系中，政治精英通常在国内的服务行业里赋予经济精英垄断性的特许经营权，使得后者能攫取绝财富，但又没有要求他们开发技术能力、创造品牌企业、提高生产效率，而这些都是驱动经济可持续发展所必不可少的。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;大亨对当地经济的贡献：&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;大亨阶层……对促进整体经济增长几乎没有什么贡献。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;除了这三个核心问题的回答，本书还坚决地反对了文化论观点——该观点认为东南亚华侨华人的经济贡献主要归因于文化。&lt;/p&gt;
+
+&lt;p&gt;反驳的理由有三点：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;文化规则这一理念忽视了历史背景。华人在东南亚很多时候只能从事商业（就好像犹太人以前只能从事金融行业那样）。&lt;/li&gt;
+  &lt;li&gt;文化论忽略了华人团体之间的差异性，曾经的方言和宗族将华人划分成不同的族群（毕竟没有普通话）。&lt;/li&gt;
+  &lt;li&gt;光看贼吃肉不见贼挨打了，诚然东南亚教父们很多华人，但是也由很多华人沦落到穷人阶层被忽略了。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;对于”东南亚教父“，他们是&lt;strong&gt;政治环境的经济产物&lt;/strong&gt;，但&lt;strong&gt;这种政治环境妨碍了该地区的经济持续发展&lt;/strong&gt;，教父们利用政治的无效率获取利益，他们的贡献远比人们普遍认为的要少。这个论点的证据之一就是&lt;strong&gt;他们的企业生产业绩一般都比他们操纵的总体经济业绩差&lt;/strong&gt;。日本学者义原国雄批评教父经济为”没有技术的工业化“。&lt;/p&gt;
+
+&lt;h2 id=&quot;评论&quot;&gt;评论&lt;/h2&gt;
+
+&lt;p&gt;东南亚大亨们的崛起有其历史原因：移民此地的华人与殖民时代的碰撞，二战之后，殖民势力退潮造成的政治权力真空让这些无孔不入的人找到了发财的机会。这些大亨们神秘、迷人（谁不喜欢八卦呢），但仔细看他们的发迹史，我们会发现这也不过是”时无英雄，使竖子成名“，功成名就之后再包装自己的故事——比如李嘉诚会跟你谈白手起家，但他不会跟你谈他老婆是谁。&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>张晔(dantezy)</title>
+   <link href="https://zhangyet.github.io/posts/about-me"/>
+   <updated>2019-04-04T11:19:53+08:00</updated>
+   <id>https://zhangyet.github.io/posts/about_me</id>
+   <content type="html">&lt;h2 id=&quot;联系方式&quot;&gt;联系方式&lt;/h2&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;zhangyet@gmail.com&lt;/li&gt;
+  &lt;li&gt;15101026275&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;学历&quot;&gt;学历&lt;/h2&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;2009.09-2013.06 本科 中山大学 数学与应用数学专业&lt;/li&gt;
+  &lt;li&gt;2013.09-2015.06 硕士 中山大学 计算数学&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;工作与项目经验&quot;&gt;工作与项目经验&lt;/h2&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;2019.04-至今 &lt;strong&gt;SixteenMarkets&lt;/strong&gt;&lt;/p&gt;
+
+    &lt;ol&gt;
+      &lt;li&gt;&lt;a href=&quot;fix_simulator&quot;&gt;fix simulator&lt;/a&gt;&lt;/li&gt;
+    &lt;/ol&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;2017.09-2019.03 &lt;strong&gt;滴滴云&lt;/strong&gt; 滴滴云用户系统&lt;/p&gt;
+
+    &lt;p&gt;滴滴云用户系统是滴滴云主要入口，具有用户注册、用户管理、资费管理（资源计费与回收）、MIS 等功能。我负责日常功能维护与新产品接入等工作。用户系统作为滴滴云入口平台，主要包括如下模块：&lt;/p&gt;
+
+    &lt;ol&gt;
+      &lt;li&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;proxy_pass&lt;/code&gt;: 鉴权、订单创建与流量转发。&lt;/li&gt;
+      &lt;li&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;api&lt;/code&gt;: 用户管理（注册、创建组用户以及邀请入组等）。&lt;/li&gt;
+      &lt;li&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;metering&lt;/code&gt;: 通过订阅&lt;code class=&quot;highlighter-rouge&quot;&gt;异步队列&lt;/code&gt;,记录虚拟云资源的状态变化。&lt;/li&gt;
+      &lt;li&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;pay&lt;/code&gt;: 询价与充值相关逻辑。&lt;/li&gt;
+      &lt;li&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;task_center&lt;/code&gt;: 定时与延时任务。包括资源的计费与回收。资源计费涉及从 metering 数据库中读取资源状态，分割计费周期，计算每个计费周期的费用。&lt;/li&gt;
+    &lt;/ol&gt;
+
+    &lt;p&gt;用户系统自我参加工作以来，经历多轮迭代，接入的产品线从单一的 &lt;code class=&quot;highlighter-rouge&quot;&gt;zstack&lt;/code&gt; 产品扩展到包括存储产品、安全产品和数据库产品等多种不同形态的产品线。进行了&lt;strong&gt;资源接口规范化&lt;/strong&gt;、&lt;strong&gt;分库分表&lt;/strong&gt;、&lt;strong&gt;metering模块抽象化&lt;/strong&gt;、&lt;strong&gt;计费任务模块化&lt;/strong&gt;和&lt;strong&gt;多region改造&lt;/strong&gt;等迭代升级，我参与其中所有模块的开发。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;2015.07-2017.08 &lt;strong&gt;严肃科技&lt;/strong&gt; Docker 平台系统 Eru&lt;/p&gt;
+
+    &lt;p&gt;平台系统 Eru 是一个集 CI/CD、服务发现和服务治理于一体的综合系统。每个服务更新之后会通过 CI 自动打包，生成镜像。开发人员可以通过界面或命令行更新版本。更新时，通过 Eru 系统的核心组件 eru-core 计算每个服务所需的资源（CPU和内存，可以根据业务内容选择资源维度，即优先考虑CPU资源和优先考虑内存维度），将服务对应的新容器部署到不同的节点上。每个节点上部署了 eru-agent 进行数据收集和节点状态监测。容器更新并通过健康检查之后，在更新 load balancer 组件进行平滑升级。&lt;/p&gt;
+
+    &lt;p&gt;主要参与开发：&lt;/p&gt;
+
+    &lt;ol&gt;
+      &lt;li&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;eru-core&lt;/code&gt;: go 开发的调度编排核心。&lt;/li&gt;
+      &lt;li&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;agent&lt;/code&gt;: 每个节点部署的 agent 组件，负责数据收集和容器监控。&lt;/li&gt;
+      &lt;li&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;eru load balancer&lt;/code&gt;: 基于 &lt;code class=&quot;highlighter-rouge&quot;&gt;openresty&lt;/code&gt; 开发的 load balancer 组件。&lt;/li&gt;
+      &lt;li&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;日志系统&lt;/code&gt;: 基于 &lt;code class=&quot;highlighter-rouge&quot;&gt;rsyslog&lt;/code&gt; 开发的日志收集，展示系统。（这个系统有个缺陷，它没有全链路 trace，不利于定位问题）&lt;/li&gt;
+    &lt;/ol&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;工作技能&quot;&gt;工作技能&lt;/h2&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Go: 2016年开始使用 Go 进行开发，2017年之后主要使用 Go 进行业务开发&lt;/li&gt;
+  &lt;li&gt;Python: 2015年-2016年使用 Python 进行业务开发&lt;/li&gt;
+  &lt;li&gt;git: 能熟练使用 git 进行版本控制&lt;/li&gt;
+  &lt;li&gt;shell: 有一定 shell 脚本开发经验&lt;/li&gt;
+  &lt;li&gt;其他：lua, docker, nginx&lt;/li&gt;
+&lt;/ul&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>kamui: bookdown vscode 插件</title>
+   <link href="https://zhangyet.github.io/posts/kamui"/>
+   <updated>2019-04-04T08:44:25+08:00</updated>
+   <id>https://zhangyet.github.io/posts/kamui</id>
+   <content type="html">&lt;h2 id=&quot;kamui-简介&quot;&gt;kamui 简介&lt;/h2&gt;
+
+&lt;p&gt;这段时间还没有到新公司报到，有空捣鼓一些没有什么回报的东西。所以我写了一个 vscode 插件：&lt;a href=&quot;https://marketplace.visualstudio.com/items?itemName=dantezy.kamui&quot;&gt;kamui&lt;/a&gt;。&lt;/p&gt;
+
+&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;kamui&lt;/code&gt; 是 &lt;a href=&quot;https://bookdown.org/&quot;&gt;bookdown&lt;/a&gt; 的 vscode 插件。这个名字来自《火影忍者》里面卡卡西的写轮眼忍术神威，这是 &lt;code class=&quot;highlighter-rouge&quot;&gt;bookdown&lt;/code&gt; 作者&lt;a href=&quot;https://yihui.name/&quot;&gt;谢益辉&lt;/a&gt;的趣味。目前功能很原始，只能 build 一个已有的 &lt;code class=&quot;highlighter-rouge&quot;&gt;bookdown&lt;/code&gt; 项目，功能容劣者慢慢迭代吧。&lt;/p&gt;
+
+&lt;h2 id=&quot;缘起&quot;&gt;缘起&lt;/h2&gt;
+
+&lt;p&gt;之前我接了我朋友&lt;a href=&quot;https://cosx.org/members/&quot;&gt;魏太云&lt;/a&gt;介绍的翻译工作。考察了几种工具之后，我发现 &lt;code class=&quot;highlighter-rouge&quot;&gt;bookdown&lt;/code&gt; 基本是组织技术书籍写作最好的工具——简单易上手、能生成多种格式的文本还能运行内嵌的代码。唯一的问题是：这是一个 &lt;code class=&quot;highlighter-rouge&quot;&gt;R&lt;/code&gt; 包。它和 &lt;a href=&quot;https://www.rstudio.com/&quot;&gt;RStudio&lt;/a&gt; 整合得非常好——但是，”阿 Sir，我唔写 R 好耐啦！“（大家肯定知道我在玩《英雄本色》梗啦）。我现在主要的开发工具是喷气大脑的 &lt;a href=&quot;https://www.jetbrains.com/go/&quot;&gt;goland&lt;/a&gt;。非主力开发工具是日渐生疏的 emacs 和日渐成熟的 vscode。&lt;/p&gt;
+
+&lt;p&gt;为此，我决定为 &lt;code class=&quot;highlighter-rouge&quot;&gt;bookdown&lt;/code&gt; 写一款 vscode 插件。&lt;/p&gt;
+
+&lt;p&gt;当然这只是主要原因，次要原因是我4月15日到&lt;a href=&quot;https://www.v2ex.com/t/480147&quot;&gt;新公司&lt;/a&gt;报到之前，我一直赋闲在家，我需要做一些落地的东西，维护自己的技能。&lt;/p&gt;
+
+&lt;h2 id=&quot;经验&quot;&gt;经验&lt;/h2&gt;
+
+&lt;p&gt;开发这种小功能，本来是很简单的。唯一的障碍在于：我从来没有学过前端开发（或者说 js 开发）。仔细思量我觉得对我来说，学习新技能的障碍往往是三点：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;开发环境难搭，缺乏反馈（告诉你对错）的手段；&lt;/li&gt;
+  &lt;li&gt;缺乏动力和目标；&lt;/li&gt;
+  &lt;li&gt;对新知识整个体系陌生；&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;做 vscode 插件开发幸运之处在于开发环境随手可得（最多自己再装个 &lt;code class=&quot;highlighter-rouge&quot;&gt;nodejs&lt;/code&gt;)。&lt;/p&gt;
+
+&lt;p&gt;但对前端的知识体系陌生，这是致命的。&lt;/p&gt;
+
+&lt;p&gt;js 的语法很简单，即使考虑闭包和构造器，只要不作妖，其实不难。难在要理解现有的库和 API 的设计。在翻看 vscode 的 API 文档的时候，我发现我完全无法理解这些 API 的作用。直到我看了 &lt;a href=&quot;https://book.douban.com/subject/25768396/&quot;&gt;《深入浅出Node.js》&lt;/a&gt;，这本书让我对“事件驱动”和 Promise 有了初步印象，此后我看文档才真正看进去。套用库恩&lt;a href=&quot;https://book.douban.com/subject/20376550/&quot;&gt;《科学革命的结构》&lt;/a&gt;里面的概念，不同的开发领域，存在不同的范式，你需要理解范式才能更好地理解该领域。&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>流水线、效率与管理</title>
+   <link href="https://zhangyet.github.io/posts/pipeline"/>
+   <updated>2019-04-04T06:29:25+08:00</updated>
+   <id>https://zhangyet.github.io/posts/pipeline</id>
+   <content type="html">&lt;p&gt;所谓“善战者无赫赫之功”，流水线对人类的贡献远超想象（与之相似的是集装箱，有兴趣的朋友可以看一下&lt;a href=&quot;https://book.douban.com/subject/2354988/&quot;&gt;《集装箱改变世界》&lt;/a&gt;，当然流水线更伟大）。&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://book.douban.com/subject/27136649/&quot;&gt;《百年流水线》&lt;/a&gt;一书介绍了流水线自诞生到今天的历史，因为它和 &lt;a href=&quot;https://book.douban.com/subject/26330294/&quot;&gt;Team of Teams&lt;/a&gt; 都提及了 &lt;a href=&quot;https://en.wikipedia.org/wiki/Frederick_Winslow_Taylor&quot;&gt;Frederick Winslow Taylor&lt;/a&gt; 的思想。再加上最近的”995.icu“事件，所以我在此想综合这两本书，讨论一下管理问题。&lt;/p&gt;
+
+&lt;h2 id=&quot;流水线的历史&quot;&gt;流水线的历史&lt;/h2&gt;
+
+&lt;p&gt;第一条流水线诞生在福特公司的工厂，这是毋庸置疑的。在科学史上需要讨论的是，像流水线这样的创造，到底是一种循序渐进的改进，还是一种突破性的创造？&lt;strong&gt;我个人倾向两者兼而有之&lt;/strong&gt;，在福特公司创建第一条现代意义上的流水线之前，类似的设置已经在其他行业（比如屠宰行业采用了），但是福特公司整合了所有的改进。《百年流水线》一书认为：&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;应当将流水线视为处于不断变革之中的各种加工技术的结合体。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;流水线迅速提升了福特公司的生产效率，它的业务蒸蒸日上。然后福特公司将工资标准提高到每天5美元。这是流水线的黄金时代。与现在相比，当时的流水线工人工资高福利好，他们怀着一种自豪的感情进行流水线上的工作（这与我们现在对流水线的印象完全不同，实际上，本书提到，要使流水线妥善运行，福特公司需要群策群力，听取工人们的意见）。&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;产业工人对于大规模生产采取了一种积极的态度。他们意识到在自己所从事的领域采用强有力的生产系统可以产生潜在的经济效益。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;当然随着流水线技术的扩散，这个黄金岁月短暂如流星。关于流水线的批评日渐增多。流水线生产方式的推广也不尽如人意。即使在生产水平较高的西欧，也不免“橘生淮南”，并未能完美复制美国流水线的高效生产能力。&lt;/p&gt;
+
+&lt;p&gt;随后就是两次世界大战，特别是第二次世界大战，它短暂地扭转了20世纪30年代对流水线大规模的批评。&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;曾经在20世纪30年代末期受到严厉指责的流水线，如今已经成为健康、繁荣和胜利的同义词。当欧洲的战事结束之后，那里的主要制造商为了生产圣诞商品纷纷更换机器设备。 不仅主流杂志和公司广告对流水线赞赏有加，就连罗杰・伯林盖姆( RogerBurlingame)和克里斯蒂・博思( Christy Borth)这样有思想的社会评论家也难以掩饰对流水线的赞美之情。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;当然，随着战争结束，小甜甜很快变回牛夫人。战后对流水线的批评与反思卷土重来：&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;对技术性失业的恐惧，对社会生活的标准化、垃圾的大量产生和大规模生 产的毫无味觉的食品的担忧已经成为各大主流报刊、调查团体，以及专题研讨会上讨论的重点内容，而且越来越多的人对雅克·埃吕尔( Jacques Ellul)于1964年出版的英译本著作 The Technological Society产生了浓厚的兴趣。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;雅克埃吕尔认为技术体系对自由的威胁远超意识形态，因为技术体系席卷了整个社会。事实上，流水线已经深深地改人类社会图景了，这是一个不可逆的过程。由此诞生了“商品崇拜主义”（当然我这个论断并不是很严谨）。&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;商品崇拜主义意味着人们对流水线生产出来的商品存在着广泛期望的同时，还对与生产有关的工作存在着鄙视的情绪。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;随着日本经济的发展，流水线技术在日本进化了，美国的汽车公司发现他们的日本同行在流水线生产上青出于蓝。美国的汽车制造商们一时节节败退，当他们像模仿日本改良自己的流水线时，他们遭遇了当年在欧洲推广流水线相似的困境。&lt;/p&gt;
+
+&lt;p&gt;在最后回首流水线那未完的历史，本书概括了两点：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;流水线加剧了不平等：&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;本国工作岗位向海外的迁移和白领工作的计算机化并没有让普通工人从中受益，而是让公司的管理层成为最大的受益者。20世纪70年代，企业高管的工资收入是普通工人的42倍。在当时看来，双方的工资差异确实很大，但是在装下来的几十年中，企业高管的福利待遇要远远超过当时的水平。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;工业升级并不是容易的事情：&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;那些从流水线的历史中总结概括出的内容之间都存在一定的关联性。一方面，技术动力对现存生产体系进行了小规模的渐进式的变革，另一方面，它强化了对引入替代系统的抵触情绪。对生产体系进行根本的变革是不太可能出现在那些拥有根深蒂固的生产方式(或者拥有强烈的路径依赖)和稳定市场的传统产业中的。技术创新更容易出现在某些新兴产业中，例如1913年的美国汽车产业和1955年的日本汽车产业。那些从流水线的历史中总结概括出的内容之间都存在一定的关联性。一方面，技术动力对现存生产体系进行了小规模的渐进式的变革，另一方面，它强化了对引入替代系统的抵触情绪。对生产体系进行根本的变革是不太可能出现在那些拥有根深蒂固的生产方式(或者拥有强烈的路径依赖)和稳定市场的传统产业中的。技术创新更容易出现在某些新兴产业中，例如1913年的美国汽车产业和1955年的日本汽车产业。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;本书最大的缺点在于过于关注流水线在汽车工业的情况，忽略了其他工业部门。&lt;/p&gt;
+
+&lt;h2 id=&quot;流水线模式与泰勒思想&quot;&gt;流水线模式与泰勒思想&lt;/h2&gt;
+
+&lt;p&gt;Frederick Winslow Taylor （以下简称泰勒）在20世纪初提出科学管理方法，致力提高工业生产效率。Team of teams 高度评价了泰勒的思想，认为他的思想影响深远，福特的流水线就是该思想的产物。有趣的是，《百年流水线》一书认为福特的流水线思想与泰勒的科学管理方法大相径庭，实际上也有福特主义的说法，两者的关系见&lt;a href=&quot;https://en.wikipedia.org/wiki/Scientific_management#Relationship_to_Fordism&quot;&gt;维基页&lt;/a&gt;。&lt;/p&gt;
+
+&lt;p&gt;福特的思想与泰勒的思想是否一致，谁影响了谁，诸如此类的问题，可以留给历史学家和管理学家研究。在此不必多言。关键是流水线和泰勒的科学管理，都代表了一种“效率至上”主义，在这种思路之下，一切都是围绕效率转。&lt;/p&gt;
+
+&lt;p&gt;Team of teams 一书主要描述美军在中东遇到的挫败以及由此带来的改变。具体的内容可以参考&lt;a href=&quot;https://book.douban.com/review/7939119/&quot;&gt;这篇书评&lt;/a&gt;，该书作者 Stanley McChrystal 将军认为美军已经组建了联合特种作战部队（Joint Special Operations Task Force）这么强大一支队伍了，为什么偏偏无奈基地组织何？他认为问题出在泰勒主义上，联合特种作战部队就是泰勒主义指导下建立的部队，但是时代已经变了，面对新时代的挑战，适应性比效率更重要。他在 Team of teams 一书提出的方案就是：&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;建立无边界组织，让信息在组织内部充分流动，锻炼每个组织成员的全局性和系统性思考能力；对组织成员赋能和放权，锻炼每个成员的信息处理能力和决策能力。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;这一段引用文字出自前文提及到的&lt;a href=&quot;https://book.douban.com/review/7939119/&quot;&gt;书评&lt;/a&gt;。&lt;/p&gt;
+
+&lt;h2 id=&quot;评论&quot;&gt;评论&lt;/h2&gt;
+
+&lt;p&gt;平心而论，我对 Team of teams 的评价并不高——即使它提供了一种有参考价值的思路。这一类管理学或者讨论团队的书籍，都会讲述一个美好的故事，这个故事里面，一个组织，或者团队，一旦找到正确的方法，难题就会迎刃而解。可惜的是，在这个故事里面，那个卓越的组织精干的团队，就仿佛是柏拉图的理想模型，是一个可望而不可及的存在。这样的组织或者团队，由专精各种技能、充满热情而且精力充沛的人组成，他们对团队的任务抱着崇高的情感（而且不需要讨论他们的薪酬！）&lt;/p&gt;
+
+&lt;p&gt;当理想回到现实，你会发现一地鸡毛：你招聘过来的人，可能连 git 都不会用，尽管他/她挂着一个985/211的学位。他/她对工作毫无热情（噢，可能你本人也是），每天只是面向工资编程。他/她从不了解别的部门在干什么，即使有全员大会，让不同团队互通有无，他/她也只是心不在焉地玩弄手机。好不容易组建了一个团队，但是公司其他团队甩锅的甩锅，划水的划水，这种情况下，“建立无边界组织”从何谈起？&lt;/p&gt;
+
+&lt;p&gt;但我并不是说 IT 公司应该像流水线工厂一样——老实说，IT 公司做不到流水线工厂一样，因为软件开发到现在为止还是一项手艺活。任何人如果能将软件工程分割成真正的流水线工作：每个流程标准化，而且简单到无须高强度培训就能完成，那么这个人应该得图灵奖（或者其他别的奖项）。本质来说，现在中国的 IT 公司就手工小作坊的聚合体（也许外国的公司也是，但我没有在外国的公司工作过不好说）。&lt;/p&gt;
+
+&lt;p&gt;综上我认为现阶段在中国谈管理方法是水中捞月。假如我们认为 Team of teams 里面陈述的内容是对的，我们已经进入了一个复杂多变而且变动频繁的社会，那么中国公司面对的管理问题就是：它们从来没有建立一个能有效追求效率的管理制度，就要去面对一个适应性比效率更重要的世界。而美国推广流水线以及从日本重新学习改良流水线的经验告诉我们，一种模式，特别是管理模式，并不能轻易复制的。无论如何，996更多只是一种心理安慰，它消耗了员工的精力，带来不大的收益，除了让管理层获得心理满足之外，并没有任何用处。&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>TinyLFU 一种缓存策略</title>
+   <link href="https://zhangyet.github.io/posts/tiny-lfu"/>
+   <updated>2019-03-25T10:01:03+08:00</updated>
+   <id>https://zhangyet.github.io/posts/tiny_lfu</id>
+   <content type="html">&lt;h1 id=&quot;tinylfu-一种缓存策略&quot;&gt;TinyLFU 一种缓存策略&lt;/h1&gt;
+
+&lt;p&gt;读 &lt;a href=&quot;https://blog.dgraph.io/post/caching-in-go/&quot;&gt;The State of Caching in Go&lt;/a&gt; 的时候知道了 &lt;a href=&quot;https://github.com/ben-manes/caffeine&quot;&gt;caffeine&lt;/a&gt;， 知道它是基于 TinyLFU 实现的，所以找了&lt;a href=&quot;https://arxiv.org/pdf/1512.00727.pdf&quot;&gt;文章&lt;/a&gt;来看看。&lt;/p&gt;
+
+&lt;h2 id=&quot;导论&quot;&gt;导论&lt;/h2&gt;
+
+&lt;p&gt;缓存的底层原理是 &lt;a href=&quot;https://en.wikipedia.org/wiki/Central_tendency&quot;&gt;locality 假设&lt;/a&gt;（就像统计学家通常假设正态分布一样）。而这种 locality 是可以通过频次统计来估计出来的。&lt;/p&gt;
+
+&lt;p&gt;命中率最高的策略就是 LFU，但是 LFU 有两个缺点：1. 需要维护比较大的元数据（比如说 key 的频数统计，缓存根据元数据来决定那些 key 需要清退）；2. 频数变化可能会很快。&lt;/p&gt;
+
+&lt;p&gt;与 LFU 相对的是 LRU， LRU 保证最新的 key 在前面，淘汰最旧的 key。LRU 效率会更高，但是需要更大的缓存空间才能达到 LFU 的命中率。(但是我自己做了个实验，发现并非如此：在 zipf 分布的情况下，LFU 的命中率比 LRU 的命中率高不了多少，但是耗时明显比 LRU 高，在均匀分布的条件下，两者的表现都很差， 测试用的代码在&lt;a href=&quot;https://github.com/ZhangYet/ahotori/tree/master/Demos/CacheTest&quot;&gt;这里&lt;/a&gt;， 当然我这里的结论可能不正确，因为我的测试可能不够全面，无论如何，我觉得在大部分场景下， LRU 都比 LFU 有优势——命中率差不多，速度快，实现更简单)。&lt;/p&gt;
+
+&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;TinyLFU&lt;/code&gt; 的改进之处在于：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;对某个 key 是否放入缓存，有一个准入策略，需要判断把 key 放进缓存有利才会放；&lt;/li&gt;
+  &lt;li&gt;更紧凑的数据结构；&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h2 id=&quot;相关工作&quot;&gt;相关工作&lt;/h2&gt;
+
+&lt;p&gt;这个章节提到各种 LFU 的改进方案。另外提及了一些近似计数方案(approximate counting architecture)：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;TinyLFU&lt;/code&gt; 不考虑抽样方法，因为抽样方法需要 keys 有 explicit representation 这个增加成本。&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://web.stanford.edu/~montanar/RESEARCH/FILEPAP/sigmetrics08_final.pdf&quot;&gt;Counter Braids&lt;/a&gt; 可以减少 meta data 的尺寸，但是解码麻烦，所以也不考虑。&lt;/li&gt;
+  &lt;li&gt;综合比较了几种 multi hash sketches，最后选择了 &lt;a href=&quot;https://cloud.tencent.com/developer/article/1136056&quot;&gt;Counting bloom filter&lt;/a&gt; 加上 &lt;a href=&quot;http://www.cs.technion.ac.il/~gilga/CS-2014-04.pdf&quot;&gt;minimal increment scheme&lt;/a&gt;，这个方案。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;（以上文献我都没读过——一篇文献带出无数文献，要真读了我得死去啊，这一方面也反映了 IT 从业人员的艰辛。）&lt;/p&gt;
+
+&lt;h2 id=&quot;tinylfu-架构&quot;&gt;TinyLFU 架构&lt;/h2&gt;
+
+&lt;p&gt;总的来说就是每次需要淘汰 key 的时候，就是拿出新的 key 取它在计数器里面的值，跟需要淘汰的 key 的值比较，如果新的 key 的值更大，那么就淘汰旧的（但我不明白怎能取到新的 key 的计数，就算可以吧，这个新的 key 的计数为什么可以代表它的频数）。&lt;/p&gt;
+
+&lt;h3 id=&quot;近似计数&quot;&gt;近似计数&lt;/h3&gt;
+
+&lt;p&gt;这里采用了 minimal increment CBF。支持两种方法：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;Estimate&lt;/code&gt;: 计算 k 个不同的 hash 值，以 hash 值为索引，找到对应的计数器，然后返回最小的值。&lt;/li&gt;
+  &lt;li&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;Add&lt;/code&gt;: 计算 k 个不同的 hash 值，以此为索引，增加值最小的计数器的值（如果值最小的计数器有多个，则增加多个计数器的值）。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;因为采用了 minimal increment 策略，所以不支持减少计数，但是有利于统计高频的 key，详细的分析可以看&lt;a href=&quot;http://www.cs.technion.ac.il/~gilga/CS-2014-04.pdf&quot;&gt;这篇文献&lt;/a&gt;（然而我还没有看）。&lt;/p&gt;
+
+&lt;h3 id=&quot;更新机制freshness-mechanism&quot;&gt;更新机制(freshness mechanism)&lt;/h3&gt;
+
+&lt;p&gt;3.3.2 两条引理就是说“频数接近期望”，这都能写一节，明显是欺负 CS 的人概率学读得少啊。&lt;/p&gt;
+
+&lt;p&gt;但是这一节（3.3）我没有怎么读懂，为什么要在达到一定的 sample size 之后除以2，看起来挺莫名其妙的。&lt;/p&gt;
+
+&lt;h2 id=&quot;总结&quot;&gt;总结&lt;/h2&gt;
+
+&lt;p&gt;从总体思路上，&lt;code class=&quot;highlighter-rouge&quot;&gt;TinyLRU&lt;/code&gt; 就是换用了一种更高效的方法（且在空间和时间上平衡）去估算 key 的分布。这让我想起2017年，用机器学习去估 key 分布从而优化数据库索引的&lt;a href=&quot;https://arxiv.org/abs/1712.01208&quot;&gt;这篇文章&lt;/a&gt;。有可能这是一种新套路：通过估变量分布来优化性能，或者我们应该搞一个公共组件专门来做这种事情。&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>《但丁九篇》书评</title>
+   <link href="https://zhangyet.github.io/posts/nine-dantesque-essays"/>
+   <updated>2019-03-23T02:39:25+08:00</updated>
+   <id>https://zhangyet.github.io/posts/nine_dantesque_essays</id>
+   <content type="html">&lt;p&gt;作为博学的作家，博尔赫斯的&lt;a href=&quot;https://book.douban.com/subject/25956991/&quot;&gt;《但丁九篇》&lt;/a&gt; 是非常专业的文学评论，作为一个普通读者，获取知识是读此书最大的乐趣。&lt;/p&gt;
+
+&lt;p&gt;《天堂篇》出现了由贤人组成的大鹰（想起血源里面的重生古神，博尔赫斯也提到像这种一群生物组成的一个生物往往不是好形象）。但是在但丁之前，波斯诗人法里德.奥丁.阿塔尔讲了一个关于大鹏的故事：众鸟想寻找大鹏，经过重重劫难之后，只剩下三十只鸟达到大鹏山——它们发觉自己就是大鹏，大鹏就是它们当中的每一个，又是它们的全体（一即是全，全即是一，十分钢炼）。&lt;/p&gt;
+
+&lt;p&gt;“爱上一个人就像是创建一种宗教，而那种宗教所信奉的神是靠不住的。但丁对贝雅特里齐的感情达到了偶像崇拜的程度，这是无可反驳的事实，她有时嘲笑，有时忽视但丁……”“我（博尔赫斯）觉得但丁创作这部文学杰作的目的，是为了插进一些他通无法挽回的贝雅特里齐重逢的场面”博尔赫斯对但丁创作目的的解读解释了为什么《炼狱篇》最后，贝雅特里齐与但丁重逢的场景是如此尴尬——贝雅特里齐光顾着训斥但丁了。&lt;/p&gt;
+
+&lt;p&gt;除了这种知识性的收获之后，博尔赫斯也给出了一份精读章节列表：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;《地狱篇》第一歌；&lt;/li&gt;
+  &lt;li&gt;《地狱篇》第三十三歌乌戈利诺的章节（1-75行）；&lt;/li&gt;
+  &lt;li&gt;《地狱篇》第二十六歌90行之后，奥德赛的终局；&lt;/li&gt;
+  &lt;li&gt;《炼狱篇》最后一歌，但丁与贝雅特里齐的重逢；&lt;/li&gt;
+  &lt;li&gt;《天国篇》第三十一歌，但丁与贝雅特里齐的告别；&lt;/li&gt;
+&lt;/ol&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>go cache 实现综述</title>
+   <link href="https://zhangyet.github.io/posts/go-cache"/>
+   <updated>2019-03-15T21:23:19+08:00</updated>
+   <id>https://zhangyet.github.io/posts/go_cache</id>
+   <content type="html">&lt;p&gt;本文是 &lt;a href=&quot;https://blog.dgraph.io/post/caching-in-go/&quot;&gt;The State of Caching in Go&lt;/a&gt; 的读书笔记，希望通过本文，理清缓存设计的一些思路，同时考擦已有的 &lt;code class=&quot;highlighter-rouge&quot;&gt;go&lt;/code&gt; 缓存实现的方案，“鉴于往事，有资于治道也”。&lt;/p&gt;
+
+&lt;h2 id=&quot;缓存的几点要求&quot;&gt;缓存的几点要求&lt;/h2&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;并发；&lt;/li&gt;
+  &lt;li&gt;可以限制内存使用；&lt;/li&gt;
+  &lt;li&gt;随着 &lt;code class=&quot;highlighter-rouge&quot;&gt;goroutine&lt;/code&gt; 或 core 的数目增长，scale well；&lt;/li&gt;
+  &lt;li&gt;非随机 key 的情况下， scale well；&lt;/li&gt;
+  &lt;li&gt;缓存命中率高；&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h2 id=&quot;几种-trival-的方案&quot;&gt;几种 trival 的方案&lt;/h2&gt;
+
+&lt;h3 id=&quot;go-map-with-syncmutex&quot;&gt;Go map with sync.Mutex&lt;/h3&gt;
+
+&lt;p&gt;直接用 &lt;code class=&quot;highlighter-rouge&quot;&gt;Go&lt;/code&gt; 的 &lt;code class=&quot;highlighter-rouge&quot;&gt;map&lt;/code&gt; 来做缓存，这种方法当然简单实在，加上 &lt;code class=&quot;highlighter-rouge&quot;&gt;sync.Mutex&lt;/code&gt; 可以避免并发的问题。但首先它不会限制内存的使用，其次，&lt;code class=&quot;highlighter-rouge&quot;&gt;goroutine&lt;/code&gt; 一旦多了，所有 &lt;code class=&quot;highlighter-rouge&quot;&gt;goroutine&lt;/code&gt; 都在等锁释放，性能下降了。（但是我看不出它跟 key 的分布有什么关系，感觉缓存命中率也不是考虑的范围。&lt;a href=&quot;https://blog.dgraph.io/post/caching-in-go/&quot;&gt;原文&lt;/a&gt;说它不符合要求2-5，这令我觉得很诧异。&lt;/p&gt;
+
+&lt;h3 id=&quot;go-map-using-lock-striping&quot;&gt;Go map using lock striping&lt;/h3&gt;
+
+&lt;p&gt;关于什么是 lock striping, 可以看&lt;a href=&quot;https://stackoverflow.com/questions/16151606/need-simple-explanation-how-lock-striping-works-with-concurrenthashmap&quot;&gt;这个回答&lt;/a&gt;。 通过 lock striping，多线程（多 
+&lt;code class=&quot;highlighter-rouge&quot;&gt;goroutine&lt;/code&gt;) 场景下，不会整个缓存锁住（只会锁住一部分），解决了要求3，但是依然没有限制朱内存使用。&lt;/p&gt;
+
+&lt;h3 id=&quot;lru-cache&quot;&gt;LRU cache&lt;/h3&gt;
+
+&lt;p&gt;然后 &lt;code class=&quot;highlighter-rouge&quot;&gt;Dgraph&lt;/code&gt; 的开发人员使用了 &lt;a href=&quot;https://github.com/golang/groupcache/blob/master/lru/lru.go&quot;&gt;groupcache&lt;/a&gt; 中的 lru 缓存。 整个 lru 实现非常经典：一条限制了长度的链表记录了对应的 key 的新旧情况，然后一个 &lt;code class=&quot;highlighter-rouge&quot;&gt;map&lt;/code&gt; 记录了对应的 key-value 对。通过限制链表长度来限制内存使用存在不足——谁知道你往缓存里面存些什么东西。当然它们还对这个 lru 做了二次开发——加了锁。&lt;/p&gt;
+
+&lt;p&gt;然后他们就被悲哀地发现，这种双链表的 lru 实现每次读都要写一次链表（更新记录的新旧情况）实在太坑了，它带来了大量的 contention，所以这种方案不符合要求3-4&lt;/p&gt;
+
+&lt;h3 id=&quot;striped-lru-cache&quot;&gt;Striped LRU cache&lt;/h3&gt;
+
+&lt;p&gt;这种方案他们都懒得试了，只是做了性能测试，并认为它不会满足要求4。&lt;/p&gt;
+
+&lt;h2 id=&quot;流行的缓存实现&quot;&gt;流行的缓存实现&lt;/h2&gt;
+
+&lt;h3 id=&quot;bigcache&quot;&gt;&lt;a href=&quot;https://github.com/allegro/bigcache&quot;&gt;bigcache&lt;/a&gt;&lt;/h3&gt;
+
+&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;bigcache&lt;/code&gt; 对先对 key hash 分配到不同的 shard 中，shard 的数量可配置（默认1024）。每个 shard 有一个 ring buffer 实际存储数据，有一个 map 记录 key 对应的 index， 如果同一个 key 被 set 多次，那么前面的 entry 会被置为 invalid。 shard 会在容量不够切且没有到达上限的时候扩容。缓存有生存周期，每个生存周期都会把过期的缓存清除。&lt;/p&gt;
+
+&lt;h3 id=&quot;freecache&quot;&gt;&lt;a href=&quot;https://github.com/coocood/freecache&quot;&gt;freecache&lt;/a&gt;&lt;/h3&gt;
+
+&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;freecache&lt;/code&gt; 将缓存分成256个 segement，每个 segement 有256个 slot，slot 用 ring buffer 存储数据，读写的时候， segement 会上锁。&lt;/p&gt;
+
+&lt;h3 id=&quot;groupcache&quot;&gt;&lt;a href=&quot;https://github.com/golang/groupcache/tree/master/lru&quot;&gt;groupcache&lt;/a&gt;&lt;/h3&gt;
+
+&lt;p&gt;作者对 &lt;code class=&quot;highlighter-rouge&quot;&gt;groupcache&lt;/code&gt; 做了二次开发，这就是前面说的 Striped LRU cache 实现。&lt;/p&gt;
+
+&lt;h3 id=&quot;性能比较&quot;&gt;性能比较&lt;/h3&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://blog.dgraph.io/images/cache_read_workload.svg&quot; alt=&quot;读性能&quot; /&gt;&lt;/p&gt;
+&lt;center&gt;读性能&lt;/center&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://blog.dgraph.io/images/cache_write_workload.svg&quot; alt=&quot;写性能&quot; /&gt;&lt;/p&gt;
+&lt;center&gt;写性能&lt;/center&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://blog.dgraph.io/images/cache_mixed_workload.svg&quot; alt=&quot;读写性能&quot; /&gt;&lt;/p&gt;
+&lt;center&gt;25%写 75%读情况下性能&lt;/center&gt;
+
+&lt;p&gt;就读写性能来说，&lt;code class=&quot;highlighter-rouge&quot;&gt;bigcache&lt;/code&gt; 表现最好，但是数据测试表示它的命中率有点惨不忍睹。在 Zipf 分布的情况下，缓存数量达到10000000级别的时候，命中率居然可以低到55%。分析有如下两个原因：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;bigcache&lt;/code&gt; 没有善用 buffer，往往同一个 key 同时存了多个 entry （写入多次的时候）；&lt;/li&gt;
+  &lt;li&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;bigcache&lt;/code&gt; 不会在读的时候更新 entry，所以可能会清退最近访问的 key；&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;所以，即使是 &lt;code class=&quot;highlighter-rouge&quot;&gt;bigcache&lt;/code&gt; 也没有符合要求5。&lt;/p&gt;
+
+&lt;h2 id=&quot;扩展阅读&quot;&gt;扩展阅读&lt;/h2&gt;
+
+&lt;p&gt;据说 &lt;a href=&quot;https://github.com/ben-manes/caffeine&quot;&gt;Caffeine&lt;/a&gt; 能满足前面所说的&lt;a href=&quot;缓存的几点要求&quot;&gt;五条要求&lt;/a&gt;, 它采用了 &lt;a href=&quot;https://arxiv.org/abs/1512.00727&quot;&gt;TinyLFU&lt;/a&gt;。此外还可以参考&lt;a href=&quot;http://highscalability.com/blog/2016/1/25/design-of-a-modern-cache.html&quot;&gt;Design Of A Modern Cache&lt;/a&gt;。&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>为美好的中大献上祝福</title>
+   <link href="https://zhangyet.github.io/posts/sysy"/>
+   <updated>2018-11-11T00:00:00+08:00</updated>
+   <id>https://zhangyet.github.io/posts/sysy</id>
+   <content type="html">&lt;p&gt;我自己向来不过生日，自然也觉得校庆没有啥好庆祝的。所以校庆的时候大家开心，而我觉得无聊。&lt;/p&gt;
+
+&lt;p&gt;但是今年不同，我觉得有必要写点不成文的东西来为我的母校献上祝福。&lt;/p&gt;
+
+&lt;p&gt;我的师兄P博士常常向我诉苦，说学术圈的压力太大，大学也不是世外桃源云云。当了三年社畜的我当然回以“Naive”的批评。最迟在二战之后，美国的大学都已经远离那种理想主义希腊学院式的知识殿堂，变成了一个复杂的产物。围绕经费和科研产出，每年这么多幺蛾子，这些赤裸裸的事实，告诉我们大学现在是一种“公司、工厂和昔日传统”的混合物（当然在中国它还是一个党政机关）。对大学抱有玫瑰色的瑰丽想象只会让你的幻想破灭（当然，破灭是有好处的，看清现实才能追求理想）。&lt;/p&gt;
+
+&lt;p&gt;但是我觉得即使在大学已经变得那么复杂的今天，我觉得大学很重要的一件事是培养人（问题是培养怎样的人和怎样培养人从来都是没有定论的）。无论如何，只要它能培养出一个好人，我觉得都是一件值得庆贺的事情。2018年，无论中大是如何不堪，它起码告诉我们，它培养出了沈梦雨（如果你不知道沈梦雨是谁，我只能跟你说，她不是女足国少队长啦）——一个有理想有勇气的女孩，敢于为其他弱者发声战斗。所以我觉得很荣幸能和她做校友（但我也很惭愧不能为她做更多的事情），中山大学也很幸运有这样的学生。&lt;/p&gt;
+
+&lt;p&gt;当然过去一年还有其他不愉快的事情啦，比如张鹏事件（虽然最后张鹏最后被停职了，“你只不过比人非礼嗻？张教授无左份工同埋长江学者个title啊！”），中大处理的方式手段还是令我挺失望的（或者我就不应该有期望），依然是“大事化小，不搞大新闻”那一套。至少，也应该出台一个可操作防止校园性骚扰的方案呀。&lt;/p&gt;
+
+&lt;p&gt;写到这里，本来应该吟两句诗，升华一下主题，但无奈读得书少，找不到合适的诗句。只能说很惭愧，在这么短的篇幅里面，我写了两个关联性不是很大的主题。但无论如何（这个无论如何你要参考黄子华的栋笃笑你才能体会其中语气），希望中大可以越来越好，无中大，我无今日（无“咯”——又是一个黄子华梗），让我们为中大94周年献上美好的祝福！（掌声鼓励）&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;本来是发在豆瓣的，没想到居然触发关键词审核了，可见审核面前人人平等，不会因为我是小透明就漏掉。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;我刚刚发现，沈梦雨是我同一级的同学，我感到十分惭愧。&lt;/strong&gt;&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>年度书单</title>
+   <link href="https://zhangyet.github.io/posts/books"/>
+   <updated>2017-12-26T00:00:00+08:00</updated>
+   <id>https://zhangyet.github.io/posts/books</id>
+   <content type="html">&lt;p&gt;其实没有多少书是值得读的。理科不用读经典，读专业书需要先接受训练，否则读了也是白读。文科的经典到底是否还值得读，这个大问题存而不论。怎样读和怎样看待这些文科经典，也是一个问题。比如说你读《君主论》，问题本来不大，但是还以为现代政治学还是《君主论》那一套，就未免见笑方家了。&lt;/p&gt;
+
+&lt;p&gt;畅销书大多数是把少数道理翻来覆去地讲。外国人写得畅销书会比中国人写的好，因为外国人的逻辑以及写作训练更到位，虽然大家都只有几条道理可以讲，外国人好歹逻辑会通顺一点，何况经历翻译这一道筛子，水平实在低劣的作品都被过滤掉了。但是畅销书还是不值得读——至少不值得花大力气读。畅销书如同垃圾食品，不同的是垃圾食品的问题在于营养失衡，并且热量高，而畅销书信息含量低，相同的是，它们都是标准工业化的产品，当然畅销书的工业化不如麦当劳。&lt;/p&gt;
+
+&lt;p&gt;此外我还觉得其实读书没有什么了不起，但是我还是很乐意写一下年度书单，毕竟这能用最低的创作水准满足我的创作欲望。真是省钱实惠的穷人心灵大保健。&lt;/p&gt;
+
+&lt;h2 id=&quot;科学革命的结构&quot;&gt;&lt;a href=&quot;https://book.douban.com/subject/20376550/&quot;&gt;《科学革命的结构》&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;毫无疑问，这是我2017年读过最好的书。无论是书本身的水平，还是对我的影响。可以说，它带给我一种看待历史发展的“量子史观”（这是我生造的名词），就是说历史发展不是连续的，而是一种跃升式的变化。一旦这种跃升完成，我们对过去事实的看法就会发生翻天覆地的改变。这当然不是一种完美的观点，但是它时刻提醒我，要在历史面前保持谦卑：无论我们如何清醒，我们对历史的看法都受限于我们这个时代。&lt;/p&gt;
+
+&lt;p&gt;另外就是我基本上放弃了“以史为鉴”这种手段了。我开始认为历史是当下对史料的复述，它反映的是&lt;strong&gt;当下&lt;/strong&gt;。当宋神宗说“鉴于往事，有资于治道”的时候，他是有道理的。他处于一个儒家学说于社会紧密结合的时代，面对一部集结大量文化精英编撰的史书（注意到“史”在儒家学说中的重要性），他这样说当然无可厚非。到了现在就没有什么道理了，世界变得太复杂了，&lt;strong&gt;几乎任何从历史中寻找相似性以图预言未来的学说都是胡说八道&lt;/strong&gt;。所以，我赞同《科学革命的结构》中的发展观点，如果历史的发展不是连续的，那么“以史为鉴”其实没有太大的意义。&lt;/p&gt;
+
+&lt;h2 id=&quot;数学与人类思维&quot;&gt;&lt;a href=&quot;https://book.douban.com/subject/26628110/&quot;&gt;《数学与人类思维》&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这本书超越了《费马大定理》成为我心目中最佳的数学科普书。虽然结构略显松散，但是因为作者的功力，这本书给出了20世纪数学最好的科普图像。这本书对拓展非数学专业博士的相关人士的视野很有帮助。&lt;/p&gt;
+
+&lt;p&gt;我曾经计划写一篇关于本书的长篇书评（以赚取某知识经济产品的稿费），但是因为跳槽的事情搁置了。&lt;/p&gt;
+
+&lt;h2 id=&quot;罗马帝国的陨落&quot;&gt;&lt;a href=&quot;https://book.douban.com/subject/26905142/&quot;&gt;《罗马帝国的陨落》&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;严格来说是西罗马帝国的陨落，集中笔墨描述了四世纪末到五世纪末的罗马历史。西罗马的覆亡不是一个孤立的事件，而是一个漫长的过程。本书有学术著作的特点：论证了为什么别人不行（比如吉本的说法就很不靠谱），为什么我的说法可以（新的文献，新的考古证据），以及我的论点是什么。&lt;/p&gt;
+
+&lt;p&gt;很难看到如此流畅的历史著作，尤其难得的是，作者有卓越的幽默感——不是那种油腻中年开黄腔的幽默感，是真正的幽默感。&lt;/p&gt;
+
+&lt;h2 id=&quot;沙之书&quot;&gt;&lt;a href=&quot;https://book.douban.com/subject/25796049/&quot;&gt;《沙之书》&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;我读大学的时候只有《恶棍列传》可以读得进去，现在反而能耐心读博尔赫斯的作品了。读完这本《沙之书》，我发现了博尔赫斯和司马迁一种奇妙的对称。博尔赫斯用强调自己“闻说者”的身份（我从某地的某人听来某事，这件事是著名的某某告诉某人的），模糊虚幻与真实的界限，在虚构中塑造真实。而司马迁隐去了这个身份，在这个隐藏背后，我们看到另外一种真实：虽然《史记》记述的事情并不一定是真实的，但是司马迁是真的听到过这件事的叙述，看到过关于这件事的记载。这一个发现给了我很大的满足感。&lt;/p&gt;
+
+&lt;p&gt;另外《沙之书》里面还有一篇《事犹未了》，居然是一篇克苏鲁风格的小说（但是还是充满了博尔赫斯的书袋！），专门纪念 Lovecraft 的。这也是一重惊喜。&lt;/p&gt;
+
+</content>
+ </entry>
+ 
+ <entry>
+   <title>（年）终（岁）末的总结</title>
+   <link href="https://zhangyet.github.io/posts/summary"/>
+   <updated>2017-12-12T00:00:00+08:00</updated>
+   <id>https://zhangyet.github.io/posts/summary</id>
+   <content type="html">&lt;h2 id=&quot;一&quot;&gt;一&lt;/h2&gt;
+&lt;p&gt;2017年基本没有写什么,因为其实没有什么可写。&lt;/p&gt;
+
+&lt;h2 id=&quot;二&quot;&gt;二&lt;/h2&gt;
+&lt;p&gt;主要值得一说的事情有三件：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;把拖了很久的龋齿治了，花了一大笔钱；&lt;/li&gt;
+  &lt;li&gt;失眠得厉害，于是去香港买了保险，然后去看了睡眠科，看完睡眠科，吃了药，好多了；&lt;/li&gt;
+  &lt;li&gt;跳槽到了滴滴；&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;其他都是小事了。&lt;/p&gt;
+
+&lt;h2 id=&quot;三&quot;&gt;三&lt;/h2&gt;
+&lt;p&gt;通关了几个游戏，《黑魂3 DLC》（其实黑龙还是不行，不过勉强算过了），《黑魂2》，《马里奥 奥德赛》（真的是好玩到放不下的游戏，当然，略有微词：除了好玩，没有别的了）。《尼尔2》（这个游戏跟马里奥相反，除了不好玩，没有别的缺点）。试着玩《王者荣耀》结果还是不行。&lt;/p&gt;
+
+&lt;h2 id=&quot;四&quot;&gt;四&lt;/h2&gt;
+&lt;p&gt;书读了不少，产出不多，实在无用。&lt;/p&gt;
+
+&lt;h2 id=&quot;五&quot;&gt;五&lt;/h2&gt;
+&lt;p&gt;去年网易云音乐，做年度总结，我最常听十首歌以My Little airport为主，今年估计都是郭德纲了。年少周郎何处也，不觉的灰飞烟灭。2017年看的影视作品里面，《有顶天家族2》让我失望了（不过原作也是），《小林家的龙女仆》很惊喜，RWBY Vol4 尚可，Vol5 令人失望。 Rick And Morty S3 依然很出色，但是没有那么惊喜。看了一堆鲁邦三世，看到腻（主要是跳槽的时候看的），《少女终末旅行》和《小魔女学院》是今年看过最好的动画作品。电影方面乏善可陈，没啥特别喜欢的电影。&lt;/p&gt;
+
+&lt;h2 id=&quot;六&quot;&gt;六&lt;/h2&gt;
+&lt;p&gt;一年又一年，不能说年华虚度，也没有成就什么，模棱两可地过去了，灰色的成年恰如苍白的青春。此处本该有诗，可惜我才学不行，期待我的朋友碧窗君给续两句。&lt;/p&gt;
+
+&lt;h2 id=&quot;七&quot;&gt;七&lt;/h2&gt;
+&lt;p&gt;把这篇东西给碧窗君看了之后，她果然翻到了一首好诗：&lt;/p&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;帝城行乐日纷纷，天畔穷愁我与君。秦女笑歌春不见，巴猿啼哭夜常闻。
+
+何处琵琶弦似语，谁家呙堕髻如云。人生多少欢娱事，那独千分无一分。
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;即白乐天《寄微之》，天涯沦落，幸有知交。&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>go interface 补充说明</title>
+   <link href="https://zhangyet.github.io/posts/go-interface"/>
+   <updated>2017-12-09T00:00:00+08:00</updated>
+   <id>https://zhangyet.github.io/posts/go-interface</id>
+   <content type="html">&lt;p&gt;工作中遇到一个需求：对接口进行个性化配置。&lt;/p&gt;
+
+&lt;p&gt;现在的系统设计是这样的，大部分接口都需要返回一个 &lt;code class=&quot;highlighter-rouge&quot;&gt;arry&lt;/code&gt;， 其中的元素是接口自定义的结构体 &lt;code class=&quot;highlighter-rouge&quot;&gt;XXXApiOutput&lt;/code&gt;。最初的想法是做成像 &lt;code class=&quot;highlighter-rouge&quot;&gt;python&lt;/code&gt; 的装饰器一样的实现，后来发现并不现实。退而求其次，希望有一个统一的处理方式，可以减少对接口的侵入式改造。&lt;/p&gt;
+
+&lt;p&gt;某个晚上想到的方法就是，针对某些个性化规则，定义 &lt;code class=&quot;highlighter-rouge&quot;&gt;interface{}&lt;/code&gt;，然后处理这些 &lt;code class=&quot;highlighter-rouge&quot;&gt;interface{}&lt;/code&gt;。&lt;/p&gt;
+
+&lt;p&gt;举例来说，加入我的个性化规则需要根据 &lt;code class=&quot;highlighter-rouge&quot;&gt;Uuid&lt;/code&gt; 处理。那么我可以定义如下的结构：&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;type UuidHandler interface{
+	GetUuid() string
+}
+
+func Foo(input UuidHander) {
+	// func body
+}
+
+func HandleUuidResource(input []UuidHandler) []UuidHandler {
+	// func body
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;然后这个计划无情地失败了，这跟我的需求有关，最终发现这种实现方式对我的需求依然有一定距离。当然，最大的问题在于：&lt;strong&gt;对于 &lt;code class=&quot;highlighter-rouge&quot;&gt;go&lt;/code&gt; 函数来说，即使你为 &lt;code class=&quot;highlighter-rouge&quot;&gt;XXXApiOutput&lt;/code&gt; 实现了 &lt;code class=&quot;highlighter-rouge&quot;&gt;GetUuid &lt;/code&gt;方法，&lt;code class=&quot;highlighter-rouge&quot;&gt;[]XXXApiOutput&lt;/code&gt; 和 &lt;code class=&quot;highlighter-rouge&quot;&gt;[]UuidHandler&lt;/code&gt; 依然是不同的类型&lt;/strong&gt;。&lt;/p&gt;
+
+&lt;p&gt;详细的内容可以参考这篇博文: &lt;a href=&quot;https://npf.io/2014/05/intro-to-go-interfaces/&quot;&gt;Intro++ to Go Interfaces&lt;/a&gt;。&lt;/p&gt;
+
+&lt;p&gt;这篇博文为我们提供了一些较为深入的知识：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;假设我们的 &lt;code class=&quot;highlighter-rouge&quot;&gt;XXXApiOutput&lt;/code&gt; 实现了 &lt;code class=&quot;highlighter-rouge&quot;&gt;GetUuid&lt;/code&gt; 方法，而我们有一个函数 &lt;code class=&quot;highlighter-rouge&quot;&gt;Foo(input UuidHandler)&lt;/code&gt;, 当我们传入类型为 &lt;code class=&quot;highlighter-rouge&quot;&gt;XXXApiOutput&lt;/code&gt; 的参数的时候，我们传入了它的值，&lt;code class=&quot;highlighter-rouge&quot;&gt;go&lt;/code&gt; 会根据入参的值，构造出一个 &lt;code class=&quot;highlighter-rouge&quot;&gt;UuidHandler&lt;/code&gt; 的值。&lt;/li&gt;
+  &lt;li&gt;然而 &lt;code class=&quot;highlighter-rouge&quot;&gt;go&lt;/code&gt; 并不会把 &lt;code class=&quot;highlighter-rouge&quot;&gt;[]XXXApiOutput&lt;/code&gt; 转换为 &lt;code class=&quot;highlighter-rouge&quot;&gt;[]UuidHandler&lt;/code&gt;（其实我觉得你要是把 arry 理解成元素的集合，你也可以设计成自动转换，但显然，&lt;code class=&quot;highlighter-rouge&quot;&gt;go&lt;/code&gt; 的设计者并不是这样想的。&lt;/li&gt;
+  &lt;li&gt;看一个具体的例子，这个例子告诉我们，如果你的方法定义的时候，reciever 是指针，那么你在 &lt;code class=&quot;highlighter-rouge&quot;&gt;Foo&lt;/code&gt; 中也应该传入一个地址。这是因为对于 &lt;code class=&quot;highlighter-rouge&quot;&gt;Api2Output&lt;/code&gt;，你是把 &lt;code class=&quot;highlighter-rouge&quot;&gt;*Api2Output&lt;/code&gt; 这个类型定义成了 &lt;code class=&quot;highlighter-rouge&quot;&gt;UudiHandler interface&lt;/code&gt;。 【但是你可以直接调用 &lt;code class=&quot;highlighter-rouge&quot;&gt;api2Output.GetUuid()&lt;/code&gt; 这是因为 &lt;code class=&quot;highlighter-rouge&quot;&gt;go&lt;/code&gt; 帮你做了转换，这是何等操蛋。】&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;type Api1Output struct {}
+
+type Api2Output struct {}
+
+func (this Api1Output) GetUuid() string {
+	// func body
+}
+
+func (this *Api2Output) GetUuid() string {
+	// func body
+}
+
+var api1Output Api1Output
+var api2Output Api2output
+
+Foo(api1Output)
+Foo(&amp;amp;api2Output) // 这里输入的是 &amp;amp;api2Output
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>历史的进程与个人的奋斗</title>
+   <link href="https://zhangyet.github.io/posts/summary"/>
+   <updated>2017-01-28T00:00:00+08:00</updated>
+   <id>https://zhangyet.github.io/posts/summary</id>
+   <content type="html">&lt;p&gt;其实这篇年度总结，在元旦的时候就想写的了，但是那时候好像感冒了，所以就搁下了，此刻的我刚在成都的一家7天安顿下来，刚坐了飞机，毫无睡意，所以就把这个总结写了吧。&lt;/p&gt;
+
+&lt;p&gt;如果从整个人类的角度来看，从长远历史的角度来看，2016年最重要的事情是什么呢？是川普当选吗？我认为不是的，川普当选只是一个标志，明确地告诉大家世道变了，但事实上，世道早就变了，同样道理也适用于英国脱欧。如果让我来选去年最重要的事情，一个是阿尔法狗(master)，一个是引力波，它们刚好一个在年底，一个在年初，非常对称。阿尔法狗这个事情，我对深度学习不了解，不清楚它是否有一个重要对意义，目前来看它带来了一个必然到来的结局（棋类运动计算机会战胜人类，这是必然的事情——当然飞行棋除外），我只是相信它会开启一个新时代。而引力波，它作为爱因斯坦伟大的相对论一个论证，某种意义上，我觉得它在催促人类：一个伟大纪元已经结束了，物理学应该有一个翻天覆地的新理论了。&lt;/p&gt;
+
+&lt;p&gt;以上说的一切，跟我有什么关系呢？其实没有多大关系。过去的一年里面，我个人最重要的事情当然就是转岗平台部了，这首先是一个历史的进程，毕竟如果我司没有发展到这个阶段，就根本不会有平台部。然后当然也是个人的奋斗，尽管我的代码水平还是很抓鸡，但是我想说的就是，原本我是可以躺在一个更舒服的地方，写更烂的代码，然后混吃等死的。无论如何，好歹我作出了正确的选择。这对整个人类来说，真的是毫无意义。我只是觉得，我可以从两个角度——个人的角度和一个更宏观的角度来审视自己的人生。某种意义上来说这挺矫情的，这是因为我身上的文青习性没有改，同时——写年度总结嘛，总会矫情一点的。&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>Enjoy 日志收集系统</title>
+   <link href="https://zhangyet.github.io/posts/log-system"/>
+   <updated>2016-11-29T00:00:00+08:00</updated>
+   <id>https://zhangyet.github.io/posts/log-system</id>
+   <content type="html">&lt;p&gt;在 ENJOY 工作的一年多，目睹并参与了后台日志系统的变迁，这是一个可贵的经历。这个过程伴随我司业务的增长以及架构的变化，是弥足珍贵的经验。所以我将这段经历记录下来。&lt;/p&gt;
+
+&lt;h2 id=&quot;深渊混沌无可名状&quot;&gt;深渊混沌，无可名状&lt;/h2&gt;
+&lt;p&gt;我刚来 ENJOY 的时候，我们只有A机房，并没有一个日志收集中心。 Apollo 的日志保存在它们自己的服务器上面，都是纯文本，保存若改天后抛弃掉。 Prometheus 更惨，它前面有一个 nginx 做 LB，但是这个 nginx 的 access log 并没有被认真对待过，prometheus 本身的 log，额，既没有分割，也没有集中处理。就堆在那里，没事没人看，有事也看不出来。&lt;/p&gt;
+
+&lt;p&gt;现在回想起来，当时的日志系统就好像一个深渊，看一眼都会掉 san 值， 非常克苏鲁。&lt;/p&gt;
+
+&lt;h2 id=&quot;矇昧始觉雪夜曙光&quot;&gt;矇昧始觉，雪夜曙光&lt;/h2&gt;
+&lt;p&gt;随着 eru 平台的上线，我们终于开始有了一套相对完善的日志收集系统。 eru 平台上主要收集了两种日志：容器产生的日志和 elb 的 access log 。当时 elb 日志系统的体系相当简单：&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://zhangyet.github.io/public/image/eru1-log-system.png&quot; alt=&quot;eru1日志收集系统&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;这个架构相当简单明了。但是存在一个问题：agent 到日志收集服务器之间缺乏一个缓存（实际上 agent 是有一个比较小的缓存的，但一般没有开），而日志收集服务器作为一个单点，是整个系统最薄弱的一环。整个问题一直困扰着 eru1 。&lt;/p&gt;
+
+&lt;p&gt;最早的日志收集服务是用 logstash 做的。 logstash 存在两个问题：1. grok 难写（不多说，说起来都是泪，谁写谁知道）；2. 重启慢，而且当时还遇到一天死几次的情况，让人不得安生。 所以我着手的第一个工作是选择 logstash 的替代品。在各种日志收集工具中，最终我们选择了 heka，这很大一部分原因是宜信的 lain 也在用它。 其实也考虑过知乎的 kids，无奈的是，知乎自己弃坑之余，kids 自己的可扩展性并不好（heka 可以写 lua 脚本）。&lt;/p&gt;
+
+&lt;p&gt;最后 eru1 的日志收集服务就采用了 heka， 但当时存在两个问题：1. heka 处理时间时候有点问题，它拿到的是零时区的时间戳，这导致了你看到的 2016-11-29.log 的日志，其实是 2016-11-29 08:00:00 ~ 2016-11-30 07:59:59; 2. heka 处理 elb 数据的 docoder 插件经常会死掉，很尴尬的是，只会死这个插件，想监控都很困难。&lt;/p&gt;
+
+&lt;p&gt;随着接入日志的增多，我们开始将日志输出到 ES。 所以为了解决上一段提及的问题2， 我写了一个定时程序，定时访问 ES, 拿最新的时间戳，如果这个时间落后实际时间5分钟，那就重启 heka。 这是一个粗糙的方法。&lt;/p&gt;
+
+&lt;p&gt;值得注意的是，这个时候，我们依然保持了 agent 和 elb 直接向 日志收集系统发日志的架构。这导致后来的一场灾难。&lt;/p&gt;
+
+&lt;h2 id=&quot;一元复始万象初开&quot;&gt;一元复始，万象初开&lt;/h2&gt;
+&lt;p&gt;eru1 日志解决不了的如果问题给我们带来了若干困扰，痛定思痛之余，我们设计了 eru2 的日志系统。eru2 日志收集系统最初的设计如下图。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://zhangyet.github.io/public/image/eru2-log-system-ver1.png&quot; alt=&quot;eru2日志收集系统(version 1)&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Kafka 在其中扮演了非常重要的角色。有了 Kafka 做缓冲，即使日志收集机器有什么三长两短，我们依然可以补回日志。&lt;/p&gt;
+
+&lt;p&gt;在十一长假里面，回到家乡，没有女朋友，也没有 PS4 的程序员小马决定重整日志系统的 heka 插件。 在此之前，他曾经打算用 logstash 替代 heka 作为日志收集服务。 但无奈，grok 还是太难写了，而经过 erulb3 开发的小马，已经能够熟练进行 lua 开发了，所以他重新选择了 heka 作为日志收集工具。于此同时，他用一种简单粗暴的方法解决了 heka 时间戳的问题：既然 heka 总是拿到零时区的时间戳，那我代码里面再把8小时加上去，那总归是东8区的时间了吧。&lt;/p&gt;
+
+&lt;p&gt;在十一假期结束的时候，小马已经为 eru2 的日志收集系统构建了一组 heka 插件，eru2 的日志收集已经顺利运作起来了，一起看起来都是如此美好。但是没有人想到，命运的阴谋已经在前方等着他们了。&lt;/p&gt;
+
+&lt;h2 id=&quot;多事之秋混乱之治&quot;&gt;多事之秋，混乱之治&lt;/h2&gt;
+&lt;p&gt;十月份开始，我们的工作重点落在迁移 apollo 一事上。而在十月中旬，一个潇湘夜雨的晚上，apollo 的 mq 开始疯狂吐日志，然后龙老板发现落地的日志有巨大的延时：晚上7点看到落地的日志还是5点多的日志。更要命的是，在 kafka 上面看到对应的 topic 的 LAG 始终在增大， Offset 一直没有移动。&lt;/p&gt;
+
+&lt;p&gt;这里其实包含了三个问题：1. heka 消费了 kafka 的信息之后，并不会改变 kafka 的 Offset， 这是 heka kafka 插件的锅； 2. heka 的日志处理能力； 3. apollo 的日志吐疯了。&lt;/p&gt;
+
+&lt;p&gt;为了解决问题1，我在那个周末把 C2 的日志收集工具从 hekad 换成了 logstash，但是在龙老板和小羊把 apollo 的日志给控制住之前，换了  logstash 也无能为力。&lt;/p&gt;
+
+&lt;p&gt;正所谓“正入万山圈子中，一山放过一山拦”，时间接近双十一，日志系统依然混乱。而 eru1 日志系统的遗留问题，引发了&lt;a href=&quot;http://blog.ricebook.net/a-pill-error-online/&quot;&gt;一次药丸的线上错误&lt;/a&gt;,  这次事故的原因简单概括来说，就是：容器产生了大量日志，heka 处理不来， agent 往 heka 这一段堵死了，然后容器到 agent 这一段也堵死了，之后容器就被堵死了。[注1]&lt;/p&gt;
+
+&lt;p&gt;为了确保双十一，我们再次改造了 eru1 的日志收集系统。
+&lt;img src=&quot;http://zhangyet.github.io/public/image/eru1-log-system-1111.png&quot; alt=&quot;eru1日志收集系统(双十一改版)&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;这次的改动是让容器先将容器打到本地的 rsyslog ，后者配置缓存队列，确保1. 有足够能力消化容器产生的日志；2. 在日志收集服务器挂掉的情况下，支持住，尽量不丢日志。这个改动是成功的，我们成功度过了双十一。&lt;/p&gt;
+
+&lt;p&gt;但是，从整体来看，整个日志系统到了最危险的时候，C1 的情况可以先放在一边，C2 的 agent log 和 elb access log 的处理方式，多种日志收集工具并存(rsyslog, logstash和heka)。可以说是乱象横生。&lt;/p&gt;
+
+&lt;h2 id=&quot;如切如磋如琢如磨&quot;&gt;如切如磋，如琢如磨&lt;/h2&gt;
+&lt;p&gt;为了结束这种混乱的情况，前一周和 Flex，菊总讨论，我们重新设计了 C2 的日志收集系统。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://zhangyet.github.io/public/image/eru2-log-system-ver2.png&quot; alt=&quot;eru2日志收集系统(version 2)&quot; /&gt;
+在过去的两周里面，我们将日志收集系统从双十一之后的混乱状态整理到上图中的状态。现在接入了系统的日志有：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;nginx access log;&lt;/li&gt;
+  &lt;li&gt;elb access log; [注2]&lt;/li&gt;
+  &lt;li&gt;eru agent log;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;这个改造的过程当中，有一点人生经验是值得拿出来说的：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;可以用 ` rsyslogd -N 1` 来检查 rsyslog 配置；&lt;/li&gt;
+  &lt;li&gt;截止到本文写作的时候，&lt;strong&gt;rsyslog 并没有一个足够好的插件实现“日志输出到 hdfs”这个任务&lt;/strong&gt;，omhdfs 安装就是麻烦事，所以当时就被我们放弃了。omhttpfs 性能跟不上，也不够稳定，试用之后被我们放弃了；&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;rsyslog 队列模型&lt;/strong&gt; 。rsyslog 所有输入都会进入 rsyslog main queue。 然后 rsyslog 会将信息分发到对应的 ruleset 的队列。ruleset 所有 action 会并行处理消息，当所有 action 都处理了这个消息之后， 这条消息会在 rsyslog main queue 中出队。换言之：一条消息在 main queue 中停留的时间，会取决于它对应的 ruleset 中最慢的 action。关于 rsyslog 的队列模型，可以参考以下文档：&lt;a href=&quot;http://www.rsyslog.com/doc/v8-stable/concepts/queues.html#processing-timeframes&quot;&gt;Understanding rsyslog Queues&lt;/a&gt;, &lt;a href=&quot;http://rsyslog.readthedocs.io/en/latest/whitepapers/queues_analogy.html&quot;&gt;Turning Lanes and Rsyslog Queues&lt;/a&gt; 。[注3]&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;了解了 rsyslog 队列模型之后，我们对为每个 action 配置了独立的队列，这样 main queue 堵塞从而引发日志延时的可能性大大减低。&lt;/p&gt;
+
+&lt;h2 id=&quot;其路漫漫上下求索&quot;&gt;其路漫漫，上下求索&lt;/h2&gt;
+&lt;p&gt;目前 C2 机房的日志收集系统已经初步完善，更多的日志可以方便地接入这个系统。更多的问题将会随着业务增长接踵而来。眼下有几个重要的问题：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;如何提供一个方便的日志查阅工具?&lt;/li&gt;
+  &lt;li&gt;随着日志量的增长，服务收集日志的 rsyslog 中心，该如何扩展？&lt;/li&gt;
+  &lt;li&gt;收集到的日志，还可以发挥什么作用？&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;以上就是谦卑的平台工程师小马的记录，他把这些记录予以发表，是为了总结过去“一点微不足道的工作”，使之不因为岁月的流逝而被人们遗忘。[注4]&lt;/p&gt;
+
+&lt;p&gt;[注1] 这个错误发生在双十一之前的周五，上午发生了问题之后，我们怀疑是日志的问题，但是还不知道发生问题的具体环节，直到晚上更严重的事故处理完之后，我们才开始更细致的排查，找到原因。造成事故难以排查的原因是 product 对 akihabara 的强依赖，而它们恰好都上了会产生大量日志的版本。我认同CMGS的看法：这个时候就应该严格控制变量。&lt;/p&gt;
+
+&lt;p&gt;[注2] nginx 负责将流量分发到 elb， 而 elb 负责将流量分发到容器。在系统迁移的过程当中，经常出现 nginx 没有将流量分发到正确的 elb 的情况（比如将 C2 机房的流量分发到 C1 机房的 elb），如果没有 nginx 的日志，DEBUG 的难度将会上升。&lt;/p&gt;
+
+&lt;p&gt;[注3] 这几点经验其实都是 Flex 找到并总结的。&lt;/p&gt;
+
+&lt;p&gt;[注4] 这里模仿了两个大人物的名言，其中一个大家都很熟悉，剩下不熟悉的那个是希罗多德。&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>Spike 抓虫记</title>
+   <link href="https://zhangyet.github.io/posts/spike-bugfix"/>
+   <updated>2016-10-11T00:00:00+08:00</updated>
+   <id>https://zhangyet.github.io/posts/spike-bugfix</id>
+   <content type="html">&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;spike&lt;/code&gt; 是我实现的一个 &lt;code class=&quot;highlighter-rouge&quot;&gt;graphite_api&lt;/code&gt; 的 proxy .&lt;/p&gt;
+
+&lt;p&gt;通过 &lt;code class=&quot;highlighter-rouge&quot;&gt;graphite_api&lt;/code&gt; 查询 &lt;code class=&quot;highlighter-rouge&quot;&gt;whishper&lt;/code&gt; 数据的时候，&lt;code class=&quot;highlighter-rouge&quot;&gt;query&lt;/code&gt; 的形式可能会很复杂，涉及到函数嵌套等问题，所以 &lt;code class=&quot;highlighter-rouge&quot;&gt;spike&lt;/code&gt; 其实只做了一个工作：从线上的 &lt;code class=&quot;highlighter-rouge&quot;&gt;graphite_api&lt;/code&gt; 中读取数据，再调用 &lt;code class=&quot;highlighter-rouge&quot;&gt;graphite_api&lt;/code&gt; 进行下一步的处理。实质上，从 &lt;code class=&quot;highlighter-rouge&quot;&gt;graphite_api&lt;/code&gt; 读取的数据是时间戳－数据值点对，这些数据点对是 &lt;code class=&quot;highlighter-rouge&quot;&gt;graphite_api&lt;/code&gt; 最终处理的结果，&lt;code class=&quot;highlighter-rouge&quot;&gt;spike&lt;/code&gt; 读取这些数据之后，需要对它们作逆映射，转换成 &lt;code class=&quot;highlighter-rouge&quot;&gt;graphite_api&lt;/code&gt; 定义的 &lt;code class=&quot;highlighter-rouge&quot;&gt;TimeSeries&lt;/code&gt; 实例。 总的来说，可以把 &lt;code class=&quot;highlighter-rouge&quot;&gt;spike&lt;/code&gt; 看作一个从其它线上 &lt;code class=&quot;highlighter-rouge&quot;&gt;whisper&lt;/code&gt; 读取数据的 &lt;code class=&quot;highlighter-rouge&quot;&gt;graphite_api&lt;/code&gt; （很惭愧，&lt;code class=&quot;highlighter-rouge&quot;&gt;spike&lt;/code&gt; 只是做了一点微不足道的工作)。&lt;/p&gt;
+
+&lt;p&gt;昨天 @wzyboy 跟我提了一个 bug : 同样的查询语句直接查询 &lt;code class=&quot;highlighter-rouge&quot;&gt;graphite_api&lt;/code&gt; 可以正常地获取数据，但是访问 &lt;code class=&quot;highlighter-rouge&quot;&gt;spike&lt;/code&gt; 却会返回500错误。于是我开始排查原因。&lt;/p&gt;
+
+&lt;p&gt;这个问题有点诡异，因为我无法在本地复现。错误信息最终定位到 &lt;code class=&quot;highlighter-rouge&quot;&gt;graphite_api&lt;/code&gt; 的 &lt;code class=&quot;highlighter-rouge&quot;&gt;doDrawImage&lt;/code&gt; 函数，我最初想会不会是 &lt;code class=&quot;highlighter-rouge&quot;&gt;graphite_api&lt;/code&gt; 的版本问题。我本地的 &lt;code class=&quot;highlighter-rouge&quot;&gt;graphite_api&lt;/code&gt; 是1.1.2版本，而线上的是1.1.3。于是在依赖里面指定了版本，上了一个新的容器，发现问题并没有解决。&lt;/p&gt;
+
+&lt;p&gt;然后我又开了一个 &lt;code class=&quot;highlighter-rouge&quot;&gt;cell&lt;/code&gt; 的测试环境，在上面启动 &lt;code class=&quot;highlighter-rouge&quot;&gt;spike&lt;/code&gt;， 这个 &lt;code class=&quot;highlighter-rouge&quot;&gt;spike&lt;/code&gt; 同样无法复现前面的错误。最后我只能钻进容器里面，找到容器中的 &lt;code class=&quot;highlighter-rouge&quot;&gt;graphite_api&lt;/code&gt; 在可疑的地方插入 &lt;code class=&quot;highlighter-rouge&quot;&gt;print&lt;/code&gt; 排查有错误的地方。&lt;/p&gt;
+
+&lt;p&gt;这个错误是发生在 &lt;code class=&quot;highlighter-rouge&quot;&gt;graphite_api&lt;/code&gt; 的 &lt;code class=&quot;highlighter-rouge&quot;&gt;Graph&lt;/code&gt; 类的 &lt;code class=&quot;highlighter-rouge&quot;&gt;drawText()&lt;/code&gt; 函数里面，问题在于 &lt;code class=&quot;highlighter-rouge&quot;&gt;drawText()&lt;/code&gt; 函数被很多别的函数调用了，我不知道它是在哪一个函数调用的时候出的错。最后我是用 &lt;code class=&quot;highlighter-rouge&quot;&gt;try catch&lt;/code&gt; 强行让 &lt;code class=&quot;highlighter-rouge&quot;&gt;spike&lt;/code&gt; “正常”地返回一个结果，再跟正确的结果（之所以可以这样做，是因为这个查询返回的是一个图，对比两个图其实并不难）对比，最后将错误定位到 &lt;code class=&quot;highlighter-rouge&quot;&gt;drawLabel()&lt;/code&gt; 函数里面。这个函数的作用是画出图的横坐标。&lt;/p&gt;
+
+&lt;p&gt;定位到错误之后，我发现 &lt;code class=&quot;highlighter-rouge&quot;&gt;drawLabel()&lt;/code&gt; 是用时间来做横坐标的，它会计算适当的时间点（一个 &lt;code class=&quot;highlighter-rouge&quot;&gt;datetime&lt;/code&gt; 对象），然后调用 &lt;code class=&quot;highlighter-rouge&quot;&gt;strftime(&quot;%a %l%p&quot;)&lt;/code&gt; 转换成字符串。但是线上容器进行到这一步的时候，传了一个空字符串到 &lt;code class=&quot;highlighter-rouge&quot;&gt;drawText()&lt;/code&gt; 导致了函数出错。令我感到奇怪的是，为什么同样的函数调用，再线上会出错呢？我在容器里面开 &lt;code class=&quot;highlighter-rouge&quot;&gt;python&lt;/code&gt; 解释器，发现线上的 &lt;code class=&quot;highlighter-rouge&quot;&gt;python&lt;/code&gt; 就是将 &lt;code class=&quot;highlighter-rouge&quot;&gt;datetime&lt;/code&gt; 对象转换成了空字符串了！&lt;/p&gt;
+
+&lt;p&gt;感谢 @wzyboy 他很快告诉我这是 &lt;code class=&quot;highlighter-rouge&quot;&gt;musl/libc&lt;/code&gt; 的&lt;a href=&quot;https://github.com/esmil/musl/blob/master/src/time/strptime.c&quot;&gt;问题&lt;/a&gt;，总的来说，这个 bug 的问题是这样的：线上 &lt;code class=&quot;highlighter-rouge&quot;&gt;spike&lt;/code&gt; 是用 &lt;code class=&quot;highlighter-rouge&quot;&gt;alpine&lt;/code&gt; 作为容器镜像的，而 &lt;code class=&quot;highlighter-rouge&quot;&gt;alpine&lt;/code&gt; 没有用 &lt;code class=&quot;highlighter-rouge&quot;&gt;glibc&lt;/code&gt; 而是用了 &lt;code class=&quot;highlighter-rouge&quot;&gt;musl/libc&lt;/code&gt; 。&lt;code class=&quot;highlighter-rouge&quot;&gt;musl/libc&lt;/code&gt; 不支持 &lt;code class=&quot;highlighter-rouge&quot;&gt;%l&lt;/code&gt; 这种日期格式（WHY！！！！）,最终导致了这个诡异的错误。&lt;/p&gt;
+
+&lt;p&gt;找到问题所在，修复就是小菜一碟了，将 &lt;code class=&quot;highlighter-rouge&quot;&gt;spike&lt;/code&gt; 的镜像换回 &lt;code class=&quot;highlighter-rouge&quot;&gt;centos&lt;/code&gt; 就解决了。&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>技术书籍应该怎样写</title>
+   <link href="https://zhangyet.github.io/posts/clean-code"/>
+   <updated>2016-09-04T00:00:00+08:00</updated>
+   <id>https://zhangyet.github.io/posts/clean-code</id>
+   <content type="html">&lt;p&gt;好的技术书籍应该是这样的：它叙述了基本原理同时具有操作性。原理性内容应该简明扼要地叙述，既突出其重要性，而减少读者在细节的枝蔓中迷失的风险。具体的操作指导内容应该钜细靡遗，最好给出 “best practice” 作为例子。&lt;/p&gt;
+
+&lt;p&gt;如果认同这个观点的话，&lt;a href=&quot;https://book.douban.com/subject/10797189/&quot;&gt;《编写可读代码的艺术》&lt;/a&gt;并不算一本优秀的技术书籍（甚至是糟糕的）。花了两章来叙述“起好变量的名字如何重要”和“如何起一个好的变量名字”并不能减少給变量起糟糕明白的概率。同样，讨论如何給代码排版以提高代码的可读性，也不如介绍PEP8(python), go-format(go)等工具来得有效。简而言之，本书用240页的篇幅讲述了一篇博客可以讲完的内容，并且没有给你的实践提出有益的建议。&lt;/p&gt;
+
+&lt;p&gt;作为一个墓碑上可以写 “Here lies one whose name was writ in code.”的人（其实是不可以的，毕竟我没有写出什么伟大的代码而济慈写了伟大的诗），我的建议是：&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;一个清楚统一的代码风格 styleguide, 如果你懒得自己想，直接用 google 的；&lt;/li&gt;
+  &lt;li&gt;采用工具去检查你的格式，如前所述，go 和 python 都用自己的工具去检查你的代码格式，在这方面，自动化比人更可靠， 对于 python 这种动态预言，格式检查有时候还能帮你检查出一些错误；&lt;/li&gt;
+  &lt;li&gt;严格的 code review , 本书第三部分所叙述的原则基本上都可以通过 code review 实践。如果你有糟糕的设计，你的同事会看出来（毕竟人最擅长的不就是挑别人的错吗？）， 有更好的库函数而你不知道，你的同事也会告诉你。&lt;/li&gt;
+&lt;/ol&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>《月亮与六便士》书评</title>
+   <link href="https://zhangyet.github.io/posts/moon"/>
+   <updated>2016-08-12T00:00:00+08:00</updated>
+   <id>https://zhangyet.github.io/posts/moon</id>
+   <content type="html">&lt;p&gt;昨天从长沙飞回北京，飞机上开始重读《月亮与六便士》。距离第一次读这本书，也有若干年了。&lt;/p&gt;
+
+&lt;p&gt;现在看来，本书在第四章开始，也无不可。前面三章，让“我”过多地介入了，而且不但是作为观察者的“我”，连身为作者的“我”——毛姆都投射进来了。这就不是什么好事了，毛姆还是太自恋了。&lt;/p&gt;
+
+&lt;p&gt;继续读下去，令我不快的地方更多了，“我”对善良笨拙的荷兰画家斯特罗伊夫的嘲讽无情刻薄，毫无怜悯。这除了展现了一种沙龙文人般的薄幸之外，也使得最后布兰奇的悲剧黯然无光——或者说，根本算不上悲剧了。毛姆被目为世事洞明，人情练达，但如此刻薄也只是犬儒的一种而已。即使不和托尔斯泰笔下的奥布隆斯基、列文比较，和他的英国同胞狄更斯比较起来，你也能看到毛姆离一流作家之间的差距。尽管米考伯一家，也是笨拙滑稽，但是狄更斯不会对他们无情嘲讽——如果把这种温厚部分归因于米考伯一家的原型就是狄更斯家人（待考）的话，狄更斯对孤儿匹普的姐夫的态度可以作为补充证据。他在第四十八章开头说“我原本打算到这儿就结束我这本书的内容”，于我看来，他还不如在四十八章开始这个故事，减少“我”的介入。&lt;/p&gt;
+
+&lt;p&gt;总的而言，毛姆非常聪明，但是格局不够大，所以始终做不到一流，但是《月亮与六便士》依然是值得一读的书。无容置疑，它是一本有趣的书，即使我在上面对本书作了同样刻薄（请原谅我没有毛姆的才能，所以我虽然刻薄但不俏皮）的评论，也不减它的魅力，只是希望读者们能超脱本书的樊笼，走向更高的境界。&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>《软技能》书评</title>
+   <link href="https://zhangyet.github.io/posts/soft-skill"/>
+   <updated>2016-07-29T00:00:00+08:00</updated>
+   <id>https://zhangyet.github.io/posts/soft-skill</id>
+   <content type="html">&lt;p&gt;作为一本面向技术人员的职场书籍，尽管&lt;a href=&quot;https://book.douban.com/subject/26835090/&quot;&gt;《软技能》&lt;/a&gt;一书有着明显的缺点（比如它的面面俱到，又比如它引用了一些不可靠的资料），但是它的优点也非常突出，所以它依然是一本值得一读的书——尽管不值得细读和重读。&lt;/p&gt;
+
+&lt;p&gt;它有两个突出的优点：全面，你很少会在一本介绍职场的书籍里面看到对你健身的建议，这本书里面特地花了一章讨论为什么一个技术人员要健身以及如何健身；第二，它是一本“以不工作（财务自由）”为目标的职场书籍，里面介绍了理财计划以及创业计划。如果这还不够，那么在中国，这本书还有一个优点：它的核心观点是，为了在职场上成功，你必须不断努力提升自己的能力，本书可以帮助你提升自己的能力——尽管本书也提及到人际关系的重要性，但它并非一本教你耍心机搞内斗的厚黑学书籍。&lt;/p&gt;
+
+&lt;p&gt;本书的内容概述如下：&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;[1] （如何进行你的）职业规划；
+[2] 自我营销，包括写博客、运用社交媒体扩大自己的影响力；
+[3] 自我学习以及寻找导师（本章提出的“十步快速自学方法”是本书最值得推荐的内容之一，自我学习能力是这个快速发展的社会中最为重要的能力；
+[4] 提高生产力（主要是专注，以及保持专注）；
+[5] 理财（考虑到国情的不同，本书提及的期权问题并不适用于我国，大家参考就好），提早考虑自己的退休计划很重要；
+[6] 健身与精神（提及到心灵，我觉得作者进入了一个玄学的领域，这一部分并不可取）
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;最后让我引用本书的一段文字来结束这个书评：&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;```
+简而言之，专业人士会严肃对待自己的责任和事业，愿意作出艰难的选择去做自己认为正确的事情——往往还要自己承担代价。
+```
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;成为一个专业人士，是我的自我期许。&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>论拉纳努金以及我们不应该怎样做科普</title>
+   <link href="https://zhangyet.github.io/posts/ramanujan"/>
+   <updated>2016-07-09T00:00:00+08:00</updated>
+   <id>https://zhangyet.github.io/posts/Ramanujan</id>
+   <content type="html">&lt;h1 id=&quot;拉马努金的数学成就&quot;&gt;拉马努金的数学成就&lt;/h1&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;拉马努金最主要的成就是在1914年到1919年之间，和哈代合作的一系列成果[指南VI.73, 指南VI.82]。其中最著名的成果是关于整数n的分划函数p(n)（p(n)表示整数n分解为不同整数和的组合，比如4，可以表示为4, 3+1, 2+2, 2+1+1, 1+1+1+1,所以p(4)=5）的一篇文章。拉马努金和哈代证明p(n)的渐近公式的方法后来被哈代和李特尔伍德发展成为解析数论[脚注1]最有力的工具之一[指南VI.73]。拉马努金在对p(n)的研究当中，发现了Roger-Ramanujuan恒等式[脚注2]。这些恒等式在不同的领域，比如李理论[ 脚注3]和统计物理[脚注4]，有着广泛的应用。
+
+此外，拉马努金关于p(n)的工作都涉及到模形式[脚注5][指南VI.82]，他提出的拉马努金猜想启发了H.Peterson[脚注6], R.Rankin[脚注7]等关于模形式的广泛研究。该猜想最后被菲尔兹奖获得者P.Deligne[脚注8]证明。
+
+另一个重要的成就是[Hardy–Ramanujan theorem](https://en.wikipedia.org/wiki/Hardy%E2%80%93Ramanujan_theorem)[脚注9]，这个定理给出了整数n不同的素因子的个数的大致分布（大约是loglog n)，这个结论后来在1940年被进一步推广，促成了概率数论[脚注10]的诞生。[指南VI.82]
+
+要评论一个数学家的成就，必须将他/她的成果放在数学整体发展中去衡量。
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h1 id=&quot;脚注&quot;&gt;脚注&lt;/h1&gt;
+&lt;ol&gt;
+  &lt;li&gt;解析数论&lt;/li&gt;
+  &lt;li&gt;Roger-Ramanujuan恒等式&lt;/li&gt;
+  &lt;li&gt;李理论&lt;/li&gt;
+  &lt;li&gt;统计物理&lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;模形式 模形式是数学上一个满足一些泛函方程与增长条件、在上半平面上的（复）解析函数。很难在不使用专业术语的条件下解释清楚模形式的研究对象和研究方法。但是可以为它提供一个数学史上的注脚：Andrew Wiles因为证明了费马大定理而闻名，然而他最伟大的成就是证明了志村－谷山猜想（费马大定理只是这个猜想的一个推论），而这个猜想是沟通椭圆曲线和模形式的桥梁。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;H.Peterson&lt;/li&gt;
+  &lt;li&gt;R.Rankin&lt;/li&gt;
+  &lt;li&gt;P.Deligne&lt;/li&gt;
+  &lt;li&gt;Hardy–Ramanujan theorem&lt;/li&gt;
+  &lt;li&gt;概率数论&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h1 id=&quot;参考文献&quot;&gt;参考文献&lt;/h1&gt;
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;1. [指南]
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;# 写不下去了&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>日常 十三</title>
+   <link href="https://zhangyet.github.io/posts/summary"/>
+   <updated>2016-06-30T00:00:00+08:00</updated>
+   <id>https://zhangyet.github.io/posts/summary</id>
+   <content type="html">&lt;p&gt;我忽然想到一件事，百度搜索之所以一塌糊涂，并不是百度的技术不行，而是整个中文互联网就没有产生很好的内容。&lt;/p&gt;
+
+&lt;p&gt;这就有点尴尬了.&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>alphago战胜李世石</title>
+   <link href="https://zhangyet.github.io/posts/alphago"/>
+   <updated>2016-03-09T00:00:00+08:00</updated>
+   <id>https://zhangyet.github.io/posts/alphago</id>
+   <content type="html">&lt;p&gt;真是见证历史的一天呢。虽然这个历史在历史书里面，大概只有一段吧。&lt;/p&gt;
+
+&lt;p&gt;P.S: 3月13日，我看完了《疯狂动物城》，李世石终于赢了一盘。尽管在大比分上他已经输了。&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>为什么拉马努金不是民科</title>
+   <link href="https://zhangyet.github.io/posts/psychology"/>
+   <updated>2016-02-23T00:00:00+08:00</updated>
+   <id>https://zhangyet.github.io/posts/psychology</id>
+   <content type="html">&lt;p&gt;我们知道最近一段时间，诺贝尔哥郭英森几年前在《非你莫属》的一段节目被挖出来了，因为他在里面提到了引力波——今年春节我们终于找到了引力波，这个在几十年前被爱因斯坦预言的物理现象。关于这件事情的讨论在知乎、朋友圈和微博都火了一把。&lt;/p&gt;
+
+&lt;p&gt;老实说我没看过诺贝尔哥这个视频——我已经很懒看视频了。从知乎的地方看到的片段我知道他是一个“民科”。我当年在大学网络中心当助教的时候，也收到过类似的来信。里面的内容，真的是槽点太多不知从何吐起。&lt;/p&gt;
+
+&lt;p&gt;当然，用我高中同学华哥的话来说：“你说他是民科，他就是民科，那我说你得了艾滋都可以啦！”为什么同样学历不高的拉马努金、陈景润、华罗庚不是民科，诺贝尔哥就是民科呢？&lt;/p&gt;
+
+&lt;p&gt;其实判断一个人是不是民科，最重要的一点并不是学历（虽然确实，在今天这个时代，学业专业化程度已经很高了，没有专业训练几乎不可能做出重要成就）。我认为，要认为一个人不是民科，最重要的是看他讨论的是不是科学。所以我其实是在为大家推荐一本书《这才是心理学》。&lt;/p&gt;
+
+&lt;p&gt;这本书是How to Think Straight about Psychology 第9版的翻译。有意思的是，其实这本书已经被引进不止一次，它第一次被引进的时候，中文名叫《与“众”不同的心理学》，到引进第8版的时候，中文译名变成了《对“伪心理学”说不》。说来惭愧，我其实是读过《对“伪心理学”说不》，所以在读这本《这才是心理学》的时候，时不时就有一种似曾相识的感觉，但是终究还是没有想起，大概当年读书的时候不甚认真。&lt;/p&gt;
+
+&lt;p&gt;虽然这本书的标题是心理学，但是里面讨论的范围并不仅限于心理学。如果按内容来分的话，这本书可以大致分为5个部分，其中第二部分，就是第2章和第3章，是专门讨论“什么是科学”这个问题的。&lt;/p&gt;
+
+&lt;p&gt;尽管“五四”开始，赛先生就已经走入了中国人的视野，但是必须承认，我们中的大部分人——包括我，其实并不能为科学给出一个准确的定义。那么这本书是根据“可证伪性标准”来界定一个理论是不是一个科学理论。这是卡尔 波普尔提出的一项标准。这个标准是说，一个科学理论是可以证伪的，才可能是科学理论。可能在常识上会令人困惑：如果一个理论是科学的，那为什么它还会可能被证伪呢？这其实涉及到一个问题：什么是一个理论？&lt;/p&gt;
+
+&lt;p&gt;这本书里面就提到了，“理论”这个词在科学领域和在日常生活中是不一样。我们日常生活中，理论可能就是指“一项未经证实的假设，一个纯粹的猜想或直觉”，但是在科学领域中，“理论”是指“一组具有内在联系的概念，它们能对一组数据做出解释，并对未来实验的结果做出预测”。也就是说，当我们在说一个理论的时候，我们并不会说一个理论就是对的，而是说，它可以用来做一些实验，这些实验的结果才能证明理论的对错。&lt;/p&gt;
+
+&lt;p&gt;我们绕回来，在这本书的第八章，它还介绍了科学的两个原则：关联性原则和聚合性证据。关联性原则就是说，你的理论，是要和别的理论以及实验结果联系在一起的。一个新的理论，既要解释旧的实验结果（和旧理论保持一致）又要预测新的实验结果（就是说，解释旧理论无法解释的实验结果）。聚合性证据就是说，我们通常是通过多个实验的结果结合在一起来证明一个理论的正确性的——支持这个理论的实验越多，这个理论的强度越高。&lt;/p&gt;
+
+&lt;p&gt;回过头来看拉马努金，为什么他并不是一个民科呢？首先我们来看拉马努金是怎样认识哈代的呢？他写了封信給哈代，讨论了数学问题，然后哈代发现，这个人，有天赋，把他带到了英国，成就了一个天才。&lt;/p&gt;
+
+&lt;p&gt;这个过程当中，我们注意到两点，拉马努金写信給哈代——他能看懂哈代写的东西；哈代也看懂了拉马努金东西，并且知道他是对的。数学在证伪上比心理学的证伪容易一些，毕竟数学是建立在自洽的公理系统上面一系列推理。当然每年写信給各个高校说自己证明了哥德巴赫猜想的人也有很多啊，甚至他们当中有些还提出了自己的一套公理系统，为什么这些人也是民科呢？关键就在于，他们做的那一套东西，是脱离整个数学体系的，就是跟已有的数学理论是脱节了。他们看不懂当代数学的成果，写出来的东西别人也看不懂，所以我们说一句民科，其实不太过分。&lt;/p&gt;
+
+&lt;p&gt;总结而言，判断一个人，是不是民科，最终的标准是看他做出来的东西是否符合科学的规范。尽管在当今这个时候，没有接受过正规的学术训练，是很难成为一个科学家的，但是我们如果有精力的话，也应该慎重。毕竟看成果说话才是最科学的态度。&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>论品味</title>
+   <link href="https://zhangyet.github.io/posts/on-taste"/>
+   <updated>2016-02-21T00:00:00+08:00</updated>
+   <id>https://zhangyet.github.io/posts/on-taste</id>
+   <content type="html">&lt;p&gt;品味的培养可以经由三个阶段，第一个阶段是分清喜恶，这是最简单的，然而需要将个人的喜恶细化，要逐渐弄清楚自己喜欢和讨厌的标准，否则只是猪八戒吃人参果。第二个阶段是定优劣，需要见识，亦须时常反思。最后的阶段是将优劣超越于喜恶，这一个阶段，着实不易，除了识见要高，还要破我见我执。&lt;/p&gt;
+
+&lt;p&gt;品味不应该变成排斥他人的理由。品味应该帮助我们寻找更好的生活。&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>为什么绝地一定失败</title>
+   <link href="https://zhangyet.github.io/posts/jedi"/>
+   <updated>2016-02-08T00:00:00+08:00</updated>
+   <id>https://zhangyet.github.io/posts/jedi</id>
+   <content type="html">&lt;p&gt;与其说西迪厄斯通过毁灭绝地教团来摧毁共和国，倒不如说他摧毁共和国以毁灭绝地教团。&lt;/p&gt;
+
+&lt;p&gt;TCW第六季令人扼腕，每次绝地离真相只有一步之遥时，西迪厄斯总能补上他之前的疏漏，最终，绝地仍然无法逃脱覆灭的命运。运气和智慧都不是他们败亡的原因，他们已经做了能做的事情，并且徒劳地做到最好。&lt;/p&gt;
+
+&lt;p&gt;与西迪厄斯相比，绝地最大的劣势在于他们与共和国休戚与共，但由于他们对权力的克制，他们袖手于共和国大部分事务之外。当共和国日渐腐朽，他们无法力挽狂澜，但是他们与共和国之间的紧密联系却能致他们于死地。绝地与共和国的死局也许来自他们自身的强大：他们远超常人，如果不遏制自己的欲望远离日常政务，他们很有可能被权力腐蚀。但是与权力保持距离让西斯有可乘之机。绝地的过错并非在于他们错失了克隆人战争里面战胜分离势力和西斯的良机，而在于他们无法革新这个共和国。在这种意义下，我赞同卢克新绝地团远离政治的做法（当然也做得不怎么好，无论是新正史还是传说部分）。&lt;/p&gt;
+
+&lt;p&gt;在今天的地球上，民主与宪政之所以能结合出最好的政体，大概是因为没有哪一个人可以远超群伦傲世独立。如果真的出现这么一个人，恐怕局面大不相同。&lt;/p&gt;
+
+&lt;p&gt;P.S:
+    3月5日和6日看完了《义军崛起》并且刷了《凯南》，真的伤心，昨天还是比肩而战的战友，第二天就因为66密令反目成仇了。最可悲的是，当克隆人的一员唤醒了自我，质疑命令并牺牲自己之后，凯南并不知道。&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>日常 障</title>
+   <link href="https://zhangyet.github.io/posts/summary"/>
+   <updated>2016-01-23T00:00:00+08:00</updated>
+   <id>https://zhangyet.github.io/posts/summary</id>
+   <content type="html">&lt;p&gt;最近发现了我困惑的所在：一方面我没有什么方法扩展新知（求知的动力不足，同时求知的方法也不够好），另一方面，当我遇到新知，我也无法将新的知识纳入已有的体系中。&lt;/p&gt;
+
+&lt;p&gt;真是糟糕透了。&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>《R绘图系统》简介</title>
+   <link href="https://zhangyet.github.io/posts/rgraphics"/>
+   <updated>2016-01-14T00:00:00+08:00</updated>
+   <id>https://zhangyet.github.io/posts/rgraphics</id>
+   <content type="html">&lt;p&gt;我参与翻译的《R绘图系统》（&lt;a href=&quot;http://book.douban.com/subject/6834012/&quot;&gt;R Graphics 2nd&lt;/a&gt;）。即将出版了。&lt;/p&gt;
+
+&lt;p&gt;这本书分5个部分。第零部分是导论，概述全书内容，也向读者示R绘图系统的全貌。第一部分介绍了R自身的绘图函数：你会讶异于只靠R内置的绘图函数，就可以绘出非常复杂的图。第二部分介绍基于Grid的绘图系统，这一部分从lattice和ggplot2切入。第三部分介绍了R绘图系统的一些底层知识，比如图形格式、字体和线条等。第四部分介绍了独立于R绘图系统的一些包，这些包可以帮我们画出诸如韦恩图等特别的图。&lt;/p&gt;
+
+&lt;p&gt;我主要负责第二部分的翻译，所以我会详细介绍第二部分的内容。如前所述，lattice和ggplot2都是基于grid的R包。第二部分是以这两个包的介绍开始。&lt;/p&gt;
+
+&lt;p&gt;这两个包的特点就是：它定义了一些基础的组件，并且可以组合这些组件，获得更复杂的图形。&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>为什么《星球大战》是伟大的作品？</title>
+   <link href="https://zhangyet.github.io/posts/starwars"/>
+   <updated>2016-01-11T00:00:00+08:00</updated>
+   <id>https://zhangyet.github.io/posts/starwars</id>
+   <content type="html">&lt;p&gt;其实我觉得《星球大战》的伟大不需要我说什么，只是觉得随着新的粉丝加入，星战将会有重要的改变，它不再是我们熟悉的星战——但它依然有可能伟大（第8部和第9部不搞砸的话）。&lt;/p&gt;
+
+&lt;p&gt;一方面当然是天时地利人和，让卢卡斯在这么一个节点上倒腾出《新希望》，之后无数作品受它启发——就如同《论语》和圣经一样。&lt;/p&gt;
+
+&lt;p&gt;另一方面，就是这个作品本身很伟大。工作之后，我重新看三部曲。看到《新希望》，R2D2去寻找Obi-wan，一个渺小的身影独行于万里黄沙中，当时我就感动了。当然还有后来《绝地归来》那里，卢克宽恕阿纳金那一段。我也是现在才明白，这里面的伟大。&lt;/p&gt;
+
+&lt;p&gt;最伟大的力量不是权谋和算计，而是希望。&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>斯通纳</title>
+   <link href="https://zhangyet.github.io/posts/stoner"/>
+   <updated>2016-01-07T00:00:00+08:00</updated>
+   <id>https://zhangyet.github.io/posts/stoner</id>
+   <content type="html">&lt;p&gt;今天读完了《斯通纳》，准备周末再好好写一篇长评。&lt;/p&gt;
+
+&lt;p&gt;《斯通纳》的开头，颇为平淡，看不出暴得大名的理由。一直读到中途才会感到这种平淡地下深埋的激情。第X章里面，他与学生、以及系主任的冲突，还有此后他的婚外恋，你可以看到这种深藏的激情。&lt;/p&gt;
+
+&lt;p&gt;斯通纳无疑是追寻到自己人生意义的人——他热爱学术，也有幸终身投身学术。但是这部书不是《平凡的世界》，追寻到人生意义无法让斯通纳避免人生的各种挫折：依然选择投身学术，与父母疏离；失败的婚姻；与上司冲突；无力阻止不及格的学生获得学位；真爱但是半途而废的婚外恋；女儿的不幸。当他的人生到达终点，所得的只是一个荣誉的教授头衔和一个冷清的丧礼。真可谓做人失败。&lt;/p&gt;
+
+&lt;p&gt;一个值得而且我们也愿意为之奋斗终身的目的无法使我们避免失败，那么这个目标存在的意义为何？&lt;/p&gt;
+
+&lt;p&gt;在读这本书的过程中，我常常想到《平凡的世界》。一种感觉是《平凡的世界》告诉了我们，找到了能够为之奋斗终身的目标，人生就会变得更好。但《斯通纳》告诉我们，不是这样的——即使你找到了那个目标。你依然无法避免失败，挫折。但我现在还没有找到一本书告诉我：如果你没有找到那个目标，你该怎么办？&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>素数之恋</title>
+   <link href="https://zhangyet.github.io/posts/prime-obsession"/>
+   <updated>2015-12-27T00:00:00+08:00</updated>
+   <id>https://zhangyet.github.io/posts/prime-obsession</id>
+   <content type="html">&lt;p&gt;2015年读完的最后一本书是John Derbyshire的&lt;a href=&quot;http://book.douban.com/subject/26293336/&quot;&gt;《素数之恋——黎曼和数学中最大的未解之迷》&lt;/a&gt;。&lt;/p&gt;
+
+&lt;p&gt;这本书安排章节的时候别出心裁，奇数章节会偏向数学内容，而偶数章节偏向历史。全书分为两个部分，第一个部分名为素数定理，以素数定理的证明结束（黎曼猜想可以推出素数定理），第二部分名为黎曼假设，主要讲述20世纪中，证明黎曼猜想所作的努力与成就。&lt;/p&gt;
+
+&lt;p&gt;如果让我出一个科普书籍的书单，这本书必在其中。它选了一个极好的题材。首先，黎曼猜想是一个极为重要的猜想，正如本书（P291）所言：“到1973年，已经有大量的数学文献由假定黎曼假设成立所得的定理所构成”。其次，黎曼猜想在19世纪被提出，正是数学发展的一个重要时期。证明黎曼猜想的过程与现代数学发展的过程紧密相连。实际上，本书在介绍黎曼猜想的同时，也介绍了两个世纪数学领域的成就与发展。&lt;/p&gt;
+
+&lt;p&gt;除此之外，本书的脉络很清晰。读者可以清楚地看到欧拉－高斯－狄利克雷－黎曼－阿达马（他证明了素数定理）－希尔伯特（很抱歉这条链条到此为止，因为之后，无论数学还是对黎曼猜想的证明，都进入一种开枝散叶的状态，已经无法用一条链条表示清楚了）这一路思想的传承，还可以看到不同领域的数学家对黎曼猜想发起的攻击（数学在20世纪的时候变得枝繁叶茂，不同方向的数学家之间思考的方式会有很大的不同）——你会讶异于这些看上去几乎互相独立的数学领域居然可以用来思考同一个问题。令我惊喜的是，这本书还介绍了黎曼猜想与量子力学的联系（通过Zeta函数零点的分布探寻亚原子粒子的层级分布）——以后谁说数学高冷无用的可以拿这个例子来糊他熊脸。&lt;/p&gt;
+
+&lt;p&gt;这本书最后的章节涉及研究的前沿，作者力有不逮，但无需苛责，毕竟瑕不掩瑜。&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>关于银英的脑洞与一些想法</title>
+   <link href="https://zhangyet.github.io/posts/yinying"/>
+   <updated>2015-11-30T00:00:00+08:00</updated>
+   <id>https://zhangyet.github.io/posts/yinying</id>
+   <content type="html">&lt;p&gt;起因是这一条&lt;a href=&quot;http://weibo.com/1870592737/D6iMZEcO3?type=comment&quot;&gt;微博&lt;/a&gt;。&lt;/p&gt;
+
+&lt;p&gt;然后我就想，如果齐格飞没有在第二卷死亡，那么银英接下来的故事会怎么样？&lt;/p&gt;
+
+&lt;p&gt;首先估计坎普不会死，因为“秃鹫之城 VS 伊谢尔伦”这种事情估计不会发生，而占领费沙可以提早到第三卷。那么杨提督和皇帝的决战也会提前，如果让齐格飞坐镇费沙，那么巴利米恩的剧本基本上还可以用。最大的不同在于战后，派驻同盟的总督不会是雷内坎普，而是齐格飞，那么杨大概也会愉快地领着退休金和妻小活下去。皇帝有空过来看齐格的时候，还可以和杨下盘立体象棋，对杨进行催更（催他写完他的论文）。&lt;/p&gt;
+
+&lt;p&gt;但是，按照现在作品的风格和思路，即使齐格飞没有死在秃鹫之城，他也可以死得很惨。甚至，可以说，他死得越晚越惨。&lt;/p&gt;
+
+&lt;p&gt;比如在成为同盟总督的时候被暗杀（地球教或者黑狐干的，为了激怒皇帝），杨还是得和痛失挚友的皇帝再打一场，而且估计谈和的机会都不会有。&lt;/p&gt;
+
+&lt;p&gt;又或者被挑拨离间，最后，他要扮演罗严塔尔的角色，和皇帝决战。&lt;/p&gt;
+
+&lt;p&gt;所以，总的来说，死在第二卷虽然是悲剧，但是好歹是为了保护挚友以及爱慕的人的弟弟而死。毕竟在这个对角色充满恶意的年代，北境守护死不瞑目，魔法少女三集断头，活得光荣、死得其所真的是一个角色的奢求。话说回来，其实我并不认为史塔克家可笑，他们只是做错了，最后自己遭殃了。我觉得我们对于崇高的解构有点矫枉过正。无论从审美上还是从道德规范来说，那种英雄般的崇高，还是必须的。&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>再次倒腾博客</title>
+   <link href="https://zhangyet.github.io/posts/about"/>
+   <updated>2015-10-11T00:00:00+08:00</updated>
+   <id>https://zhangyet.github.io/posts/about</id>
+   <content type="html">&lt;p&gt;终于又在开始写博客了。&lt;/p&gt;
+
+&lt;p&gt;其实没有什么好写的，毕竟我离开学术圈了。现在北京当一个码农。&lt;/p&gt;
+
+&lt;p&gt;当然大家可以请我吃饭。来电来邮件来微信甚至直接就在我的github下面开issue都行。&lt;/p&gt;
+
+&lt;p&gt;找我干活就邮件联系好了——电话都不要打，我怕接电话。&lt;/p&gt;
+
+</content>
+ </entry>
+ 
 
 </feed>
