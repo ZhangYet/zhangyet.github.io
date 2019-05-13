@@ -30,3 +30,45 @@ comments: true
 
 周末回家的时候，特意写了一个脚本去把之前写在 [gitpress](https://gitpress.io) 的博文的文件名改成符合 git-page 要求。不得不说，写得略痛苦：括号一多你就不知道该在哪里改了。
 
+最后的成果长这个样子，难得说了。
+
+```elisp
+(defun read-lines (filePath)
+  "Return a list of lines of a file at filePath."
+  (with-temp-buffer
+    (insert-file-contents filePath)
+    (split-string (buffer-string) "\n" t)))
+
+(defun get-date-line (lineList)
+  "Get the forth line of a file"
+  (nth 1 (
+	  split-string (nth 3 lineList) " ")))
+
+(defun re-format-date (dateStr)
+  "Re format the date string"
+  (replace-regexp-in-string "\/" "-" dateStr))
+
+(defun gen-new-name (fileName)
+  "Generate new name for a file"
+  (setq dateStr (get-date-line (read-lines fileName)))
+  (setq prefix (re-format-date dateStr))
+  (format "%s-%s" prefix fileName))
+
+(defun rename (filePath)
+  "Rename post file"
+  (setq newFilePath (gen-new-name filePath))
+  (rename-file filePath newFilePath))
+
+(defun iter-dir-files (fileNames)
+  (if fileNames
+      (progn
+	(setq current-file (car fileNames))
+	(if (cl-search "md" current-file)
+	    (rename current-file)
+	    )
+	(iter-dir-files (cdr fileNames)))))
+
+(iter-dir-files (directory-files "."))
+
+```
+
