@@ -1,8 +1,11 @@
 ---
-layout: post
 title: "素数之恋"
+tags: ["book", "reading", "popular science"]
+date: 2015/12/27 00:00:00
 comments: true
-author: "Dante"
+excerpt: 《质数之恋》是一本不错的科普著作。尤其可贵的是它对数学发展脉络的把握。
+layout: post
+categories: reading
 ---
 
 2015年读完的最后一本书是John Derbyshire的[《素数之恋——黎曼和数学中最大的未解之迷》](http://book.douban.com/subject/26293336/)。
