@@ -30,7 +30,7 @@ comments: true
 
 周末回家的时候，特意写了一个脚本去把之前写在 [gitpress](https://gitpress.io) 的博文的文件名改成符合 git-page 要求。不得不说，写得略痛苦：括号一多你就不知道该在哪里改了。
 
-最后的成果长这个样子，难得说了。
+最后的成果长这个样子，懒得说了。
 
 ```elisp
 (defun read-lines (filePath)
@@ -64,8 +64,7 @@ comments: true
       (progn
 	(setq current-file (car fileNames))
 	(if (cl-search "md" current-file)
-	    (rename current-file)
-	    )
+	    (rename current-file))
 	(iter-dir-files (cdr fileNames)))))
 
 (iter-dir-files (directory-files "."))
