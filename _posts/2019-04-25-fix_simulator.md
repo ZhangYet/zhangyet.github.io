@@ -2,7 +2,10 @@
 title: "写一个 FIX 模拟器"
 tags: ["programming", "go"]
 date: 2019/04/25 12:31:10
-excerpt: 新公司的首个项目
+layout: post
+excerpt: 用 go 语言实现一个 FIX 协议模拟器
+comments: true
+categories: programming
 ---
 
 来到新公司两周了，第一周时间是看代码，然后设计一个 FIX 模拟器。这周开始写。
