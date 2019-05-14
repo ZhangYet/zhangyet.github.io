@@ -2,7 +2,10 @@
 title: "work strealing 算法"
 tags: ["algorithm", "golang", "programming", "papers"]
 date: 2019/04/08 03:04:51
+layout: post
 excerpt: Scheduling Multithreaded Computations by Work Stealing 的阅读笔记
+comments: true
+categories: paper reading
 ---
 
 本文是 [Scheduling Multithreaded Computations by Work Stealing](http://supertech.csail.mit.edu/papers/steal.pdf) 的笔记，该论文提出了基于 work stealing 思想的线程分配算法。

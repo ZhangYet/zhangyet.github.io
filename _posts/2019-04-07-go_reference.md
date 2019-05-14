@@ -2,7 +2,10 @@
 title: "go 语言参考资料"
 tags: ["golang", "programming"]
 date: 2019/04/07 09:22:18
+layout: post
 excerpt: 一些 go 语言参考资料，不定期更新
+comments: true
+categories: programming
 ---
 
 # go 语言参考资料
