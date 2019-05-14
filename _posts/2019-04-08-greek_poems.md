@@ -1,8 +1,11 @@
 ---
 title: "《古希腊碑铭体诗歌选》摘抄"
-tags: ["book review", "reading"]
+tags: ["book", "reading"]
 date: 2019/04/08 11:53:49
+layout: post
 excerpt: 《罗念生全集：补卷》中《古希腊碑铭体诗歌选》的摘抄笔记。
+comments: true
+categories: reading
 ---
 
 《古希腊碑铭体诗歌选》被收录在[《罗念生全集：补卷》](https://book.douban.com/subject/2127491/)中，其中有一些小诗挺有意思，摘录如下。
