@@ -1,6 +1,6 @@
 # Site settings
 title: 一派胡言
-url: “"https://zhangyet.github.io"
+url: "https://zhangyet.github.io"
 baseurl: ""
 #timezone: Asia/Chongqing
 description: >
@@ -10,7 +10,7 @@ description: >
 email: zhangyet@gmail.com
 author: dantezy
 avatar: "https://www.gravatar.com/avatar/9d4a72055a6ab800d99f11d0822f0d2c"
-profile: 深圳后端码农
+profile: I was merely a humble vessel into which bosses, the people’s representatives, poured their thoughts and hopes. My job was to help turn this jumble into workable codes – no mean task. We were loyal to each government and each boss in turn, supporting their manifestos, their hopes and their dreams where practicable, whatever our private opinions. 当然大家都应该知道这改编自 Yes, Minister, 或者 Yes Prime Minister.
 twitter_username: dantezy2814
 #github_username: ZhangYet
 profile_links:
