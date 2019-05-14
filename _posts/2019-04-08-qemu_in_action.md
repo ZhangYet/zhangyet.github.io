@@ -58,13 +58,13 @@ qemu-system-i386 -hda freedos-1.2.qcow2 -m 256 -drive file=fat:rw:dosfiles/,form
 
 这道命令会让把 dosfiles 目录挂到虚拟机中。在虚拟机中，输入 `D:` 进入 D 盘（一个有年代感的词，“阿Sir，我唔用 windows 好多年啦！”）。 `dir` 一下，你如看见如下界面：
 
-![安装界面](./images/doom-install-1.jpg)
+![安装界面](/images/doom-install-1.jpg)
 
 `cd DOOM19S` 进入目录，运行 `INSTALL.bat`，开始安装过程。
 
 安装完成之后，你就可以开始你的“毁灭之路”了，猎运亨通！
 
-![DOOM](./images/doom-install-2.jpg)
+![DOOM](/images/doom-install-2.jpg)
 
 * [注1] 我想读者已经留意到了，本文标题就是致敬这本书。
 * [注2] 对于理工科来说，过去的经典是不必再读的（学物理的人不会再去读《自然哲学的数学原理》），但是游戏不一样，即使在画面已经进步了无数个世代，一些伟大的游戏依然能让我们愉悦，让我有所发现，很大原因是：它们的成功是建立在对游戏的本质理解上的。在这种意义上，玩一些旧游戏有“阅读原典”的作用。
