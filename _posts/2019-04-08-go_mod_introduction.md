@@ -5,7 +5,7 @@ date: 2019/04/08 20:02:49
 layout: post
 excerpt: 介绍 go modules，本文是 go modules 官方文档的摘要笔记。
 comments: true
-categories: comment
+categories: programming
 ---
 
 `go` 1.11 引入了 [modules](https://github.com/golang/go/wiki/Modules) 这个特性。本文是该文档的摘要笔记。
