@@ -1,7 +1,11 @@
 ---
-layout: post
 title: "Spike 抓虫记"
+tags: ["python", "graphite_api"]
+date: 2016/10/11 00:00:00
+layout: post
+excerpt: 一个 bug 的记录。
 comments: true
+categories: programming
 ---
 
 `spike` 是我实现的一个 `graphite_api` 的 proxy .
