@@ -1,8 +1,11 @@
 ---
 title: 《但丁九篇》书评
 tags: ["borges", "dante",  "book review"]
+layout: post
 date: 2019/03/23 02:39:25
 excerpt: 《但丁九篇》书评，博尔赫斯的文学评论。
+comments: true
+categories: reading
 ---
 
 作为博学的作家，博尔赫斯的[《但丁九篇》](https://book.douban.com/subject/25956991/) 是非常专业的文学评论，作为一个普通读者，获取知识是读此书最大的乐趣。
