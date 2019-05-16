@@ -3,7 +3,7 @@ title: "我的母校的衡水化"
 tags: ["comment"]
 date: 2019-05-17 00:10:37
 layout: post
-excerpt: 讨论一下衡水模式在某个三线小城中学的实践。
+excerpt: 讨论一下衡水模式在某个三线小城中学的实践。顺便怀个旧。
 categories: comment
 comments: true
 ---
