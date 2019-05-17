@@ -1,5 +1,5 @@
 ---
-title: "关于我的母校毫无意义的衡水化运动"
+title: "关于我母校毫无意义的衡水化运动"
 tags: ["comment"]
 date: 2019-05-18 00:10:37
 layout: post
