@@ -4,8 +4,8 @@ tags: ["emacs", "elisp", "programming"]
 date: 2019-05-13 16:23:55
 layout: post
 excerpt: 我又捡起 emacs 这门手艺，所以写一写相关心得（以及坑）。
-categories: programming
 comments: true
+categories: programming
 ---
 
 ## 缘起 ##
