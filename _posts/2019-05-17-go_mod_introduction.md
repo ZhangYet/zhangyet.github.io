@@ -1,7 +1,7 @@
 ---
 title: "go modules 简介"
 tags: ["golang", "programming"]
-date: 2019/04/08 20:02:49
+date: 2019/05/17 20:02:49
 layout: post
 excerpt: 介绍 go modules，本文是 go modules 官方文档的摘要笔记。
 comments: true
