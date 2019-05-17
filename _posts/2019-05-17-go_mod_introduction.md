@@ -87,3 +87,10 @@ go mod edit -replace=golang.org/x/text@v0.0.0-20170915032832-14c0d48ead0c=github
 1. module 引用非 module 依赖：直接用就行，如果依赖是 v2 以上的版本，`require` 会在版本号后面加上 `+incompatible`。
 2. 非 module 引用 module：v2 以下版本没有问题，1.9.7+, 1.10.3+ and 1.11 可以使用 v2 的 module， 之前的版本会要求 module 通过子文件夹的方式发布。
 
+## 小技巧
+
+使用了 `go.mod` 之后，如果依赖包没有发布，那么就无法更新。假设在开发 module A 的时候，要修改 module B 但是 module B 还不适合发布，那么我们可以用下面这种 trick 直接引用修改后的 B：
+
+```bash
+go mod edit -replace {module B}={local path to module B}
+```
