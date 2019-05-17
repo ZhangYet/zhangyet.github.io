@@ -14,8 +14,10 @@ categories: programming
 
 ## 数据与查询 ##
 
+首先我们看两个统计图[^1]:
+
 ![本科率](/images/lems_u.png)
-<center> 某中学2012-2016年本科率[^1] </center>
+<center> 某中学2012-2016年本科率 </center>
 
 ![重点率](/images/lems_p.png)
 <center> 某中学2012-2016年重点率 </center>
