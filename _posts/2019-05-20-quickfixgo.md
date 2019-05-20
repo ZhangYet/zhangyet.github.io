@@ -22,9 +22,11 @@ quickfixgo 提供了 `Acceptor` 结构。启动 `Acceptor` 进程将会监听指
 
 这就是 quickfixgo 的基本架构，重点在于数据通过不同的 `chan` 在应用内部流动，有点绕——你很难直接通过代码跳转看清楚。
 
+## 信息处理 ##
 
 
 
+## 脚注 ##
 
 [^1]: 其实严格来说还有 SessionId 还有 targetSubID 等字段，但我懒得写下来了。
 
