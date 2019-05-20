@@ -5,7 +5,7 @@ date: 2016/11/29 00:00:00
 layout: post
 excerpt: 第一份工作做的微不足道的贡献。
 comments: true
-categories: paper
+categories: programming
 ---
 在 ENJOY 工作的一年多，目睹并参与了后台日志系统的变迁，这是一个可贵的经历。这个过程伴随我司业务的增长以及架构的变化，是弥足珍贵的经验。所以我将这段经历记录下来。
 
