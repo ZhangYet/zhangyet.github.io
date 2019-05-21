@@ -24,6 +24,32 @@ quickfixgo 提供了 `Acceptor` 结构。启动 `Acceptor` 进程将会监听指
 
 ## 信息处理 ##
 
+`Session` 在 `chan messageIn` 取得 FIX message 之后，message 的处理工作由 `stateMachine` 接手，它首先检查时间（看是否在交易时间中），然后检查是已经连接。如果一切正常，它会从 `messagePool` 中取出一个 msg，然后用读取的 FIX message 数据填充这个 msg[^3]。
+
+quickfixgo 的 `sessionState` 是 `interface{}` 。它定义了：
+
+1. `inSession`;
+2. `latentState`;
+3. `logonState`;
+4. `logoutState`;
+5. `notSessionState`;
+6. `resendState`;
+
+```mermaid
+graph TB
+    latentState--connect-->logonState
+    logonState--msgTypeError-->latentState
+    logonState--RejectLogon-->latentState
+    logonState--targetTooHigh-->resendState
+    logonState--logonSuccessfully-->inSession
+    inSession--logonMsg^handleLogonFailed-->logoutState
+    inSession--handleLogout-->latentState
+    inSession--handelResendRequest or handleSequenceReset or handle normally-->inSession
+    inSession--processReject and targetTooHigh-->resendState
+    inSession--targetTooLow or incorrectBeginString-->logoutState
+```
+
+这中间的状态转移还是蛮复杂的，上图并不能完整概括。概括来说就是初始状态是 `latentState` ，Connect 之后转入 `logonState`，在 `logonState` 中接收到 logon 信息，正常处理完（即完成登录流程）会进入 `inSession`。
 
 
 ## 脚注 ##
@@ -31,3 +57,5 @@ quickfixgo 提供了 `Acceptor` 结构。启动 `Acceptor` 进程将会监听指
 [^1]: 其实严格来说还有 SessionId 还有 targetSubID 等字段，但我懒得写下来了。
 
 [^2]: 这是我觉得很 trick 的一个地方，但看明白了你会觉得很顺理成章。
+
+[^3]: 传入来的 FIX message 其实是 bytes，取出来的 msg 会在 Parse 之前被清空，然后被 Parse 成对应的 msg。我不是很明白为什么这里不是直接 new 一个空的 msg。
