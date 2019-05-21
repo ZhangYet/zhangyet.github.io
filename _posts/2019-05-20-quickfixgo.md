@@ -35,7 +35,7 @@ quickfixgo 的 `sessionState` 是 `interface{}` 。它定义了：
 5. `notSessionState`;
 6. `resendState`;
 
-```mermaid
+<div class="mermaid">
 graph TB
     latentState--connect-->logonState
     logonState--msgTypeError-->latentState
@@ -47,7 +47,7 @@ graph TB
     inSession--handelResendRequest or handleSequenceReset or handle normally-->inSession
     inSession--processReject and targetTooHigh-->resendState
     inSession--targetTooLow or incorrectBeginString-->logoutState
-```
+</div>
 
 这中间的状态转移还是蛮复杂的，上图并不能完整概括。概括来说就是初始状态是 `latentState` ，Connect 之后转入 `logonState`，在 `logonState` 中接收到 logon 信息，正常处理完（即完成登录流程）会进入 `inSession`。
 
