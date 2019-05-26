@@ -3,7 +3,7 @@ title: "《数论概论》笔记"
 tags: ["math"]
 date: 2019-05-21 12:33:01
 layout: post
-excerpt: 《数论概论》的读书笔记。
+excerpt: 《数论概论》的读书笔记。不得不说，这本书就好像评书一样，到处留扣子。
 categories: math
 comments: true
 ---
@@ -30,7 +30,7 @@ $$ a^{p-1} \equiv 1 \pmod p $$
 
 所以我们定义了 欧拉 $\Phi$ 函数：
 
-$$\Phi(m)=\sharp\{a: 1 \leq a \leq m and \gcd(a, m) = 1\}$$
+$$\Phi(m)=\sharp\{a: 1 \leq a \leq m \wedge \gcd(a, m) = 1\}$$
 
 那么，当 $\gcd(a, m)=1$ 的情况下，我们有：
 
@@ -38,6 +38,55 @@ $$a^{\Phi(m)} \equiv 1 \pmod p$$
 
 证明方式跟费马小定理差不多。
 
+## 中国剩余定理 ##
+
+欧拉公式当然好，但是如果无法计算 $\Phi$ 函数的值也就没有价值了。
+
+于是我们有 $\Phi$ 函数公式：
+
+1. 若 $p$ 是质数，且 $k \leq 1$，那么我们有 $$\Phi(p^k)=p^k-p^{k-1}$$ 。
+
+2. 若 $\gcd(m, n)=1$，那么我们有 $\Phi(mn)=\Phi(m)\Phi(n)$
+
+1 的证明很简单，因为 $p^k$ 的全部因子就是 $p,2p,3p,...,(p^{k-1}-1)p,p^k$，总共 $p^{k-1}$ 个。
+
+2 告诉我们，如果我们可以找到 $m$ 的因数分解，那么我们就可以计算 $\Phi(m)$[^3]。
+
+然后我们证明 2。
+
+虽然书里用了特写的 **COUNTING** 来说明证明的手法，但其实真正证明方法是构造双射。
+
+**证明**: 
+
+令集合 
+
+$$A = \{a: 1 \leq a \leq mn \wedge \gcd(a, mn)=1\}$$, 
+
+$$B = \{(b, c): 1 \leq b \leq m \wedge \gcd(b, m) = 1 \wedge  1 \leq c \leq n \wedge gcd(c, n) = 1\}$$，
+	
+只需要证明存在 $A$  到 $B$ 的双射即可。
+
+首先证明单射，令 $a_1, a_2 \in A$, 假设 $a_1 \equiv a_2 \pmod m$ 且 $a_1 \equiv a_2 \pmod n$，往征 $a_1 \equiv a_2 \pmod mn$。 
+
+因为 $a_1 - a_2$ 能同时整除 $m$ 和 $n$，又因为 $\gcd(m,n)=1$ 所以 $a_1 - a_2$ 可以整除 $mn$，所以 $a_1 \equiv a_2 \pmod mn$。
+
+下面证明满射，即证明方程组
+
+$$
+\begin{cases}
+a \equiv b \pmod m \\
+a \equiv c \pmod n
+\end{cases}
+$$
+
+有解，这就是**中国剩余定理**的内容了
+
+
+
+## 脚注 ##
+
 [^1]: 早这么勤奋当年读书就没有那么痛苦了。
 
 [^2]: 否则 $a^x = k \cdot m + 1$，但是 $a^x = l \cdot m$ 与 $k \cdot m + 1$ 互质。
+
+[^3]: 也就是说，我们将一个困难的问题转化成另一个困难的问题了。
