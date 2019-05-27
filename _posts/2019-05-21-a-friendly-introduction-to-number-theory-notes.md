@@ -68,7 +68,7 @@ $$B = \{(b, c): 1 \leq b \leq m \wedge \gcd(b, m) = 1 \wedge  1 \leq c \leq n \w
 
 首先证明单射，令 $a_1, a_2 \in A$, 假设 $a_1 \equiv a_2 \pmod m$ 且 $a_1 \equiv a_2 \pmod n$，往征 $a_1 \equiv a_2 \pmod mn$。 
 
-因为 $a_1 - a_2$ 能同时整除 $m$ 和 $n$，又因为 $\gcd(m,n)=1$ 所以 $a_1 - a_2$ 可以整除 $mn$，所以 $a_1 \equiv a_2 \pmod mn$。
+因为 $a_1 - a_2$ 能同时整除 $m$ 和 $n$，又因为 $\gcd(m,n)=1$ 所以 $a_1 - a_2$ 可以整除 $mn$，所以 $a_1 \equiv a_2 \pmod {mn}$。
 
 下面证明满射，即证明方程组
 
@@ -81,6 +81,7 @@ $$
 
 有解，这就是**中国剩余定理**的内容了
 
+中国剩余定理的证明其实就是把 $a$ 表示成 $mx+b$，再代入 $a \equiv c \pmod n$ 中，这样我们可以得到 $mx \equiv c-b \pmod n$，由**线性同余定理**可知有唯一解。
 
 
 ## 脚注 ##
