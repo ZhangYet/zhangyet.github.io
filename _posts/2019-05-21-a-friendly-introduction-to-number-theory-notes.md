@@ -87,7 +87,7 @@ $$
 
 > 2 is the oddest prime![^4]
 
-本章主要的定理是 [Dirichlet's theorem on arithmetic progressions](https://en.wikipedia.org/wiki/Dirichlet%27s_theorem_on_arithmetic_progressions), 它给出了这样一个结果：若 $\gcd(a, m) = 1$, 则 $ p \equiv a \pmod m $ 有无穷的整数解。这个定理和黎曼猜想有关，可以参阅[《素数之恋》](https://book.douban.com/subject/3541506/)。
+本章主要的定理是 [Dirichlet's theorem on arithmetic progressions](https://en.wikipedia.org/wiki/Dirichlet%27s_theorem_on_arithmetic_progressions), 它给出了这样一个结果：若 $\gcd(a, m) = 1$, 则 $ p \equiv a \pmod m $ 有无穷的素数解。这个定理和黎曼猜想有关，可以参阅[《素数之恋》](https://book.douban.com/subject/3541506/)。
 
 ## 素数的数量 ##
 
