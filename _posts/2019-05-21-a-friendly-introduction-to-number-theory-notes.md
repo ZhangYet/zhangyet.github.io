@@ -83,6 +83,20 @@ $$
 
 中国剩余定理的证明其实就是把 $a$ 表示成 $mx+b$，再代入 $a \equiv c \pmod n$ 中，这样我们可以得到 $mx \equiv c-b \pmod n$，由**线性同余定理**可知有唯一解。
 
+## 素数 ##
+
+> 2 is the oddest prime![^4]
+
+本章主要的定理是 [Dirichlet's theorem on arithmetic progressions](https://en.wikipedia.org/wiki/Dirichlet%27s_theorem_on_arithmetic_progressions), 它给出了这样一个结果：若 $\gcd(a, m) = 1$, 则 $ p \equiv a \pmod m $ 有无穷的整数解。这个定理和黎曼猜想有关，可以参阅[《素数之恋》](https://book.douban.com/subject/3541506/)。
+
+## 素数的数量 ##
+
+素数的数量是无限的，对它数量的一个估计由 **the prime number theorem** 给出，这个定理说明 $\pi(x) \sim \frac{x}{ln(x)}$, $\pi(x)$ 表示小于 $x$ 的素数数目。这里提及到了分析数论。 
+
+## 梅森素数 ##
+
+假如我们想找形如 $a^x-1$ 的素数，那么 $a$ 只能等于 2，否则它一定有因子 $a-1>1$，$x$ 必须是素数，否则，令 $x = m \cdot k$ 则必有因子 $a^m-1>1$, 形如 $2^p-1$ 的素数就是梅森素数。
+
 
 ## 脚注 ##
 
@@ -91,3 +105,5 @@ $$
 [^2]: 否则 $a^x = k \cdot m + 1$，但是 $a^x = l \cdot m$ 与 $k \cdot m + 1$ 互质。
 
 [^3]: 也就是说，我们将一个困难的问题转化成另一个困难的问题了。
+
+[^4]: 作者居然特意在这里讲了个冷笑话，并且在脚注里面标注了“这个笑话太烂了”。
