@@ -41,3 +41,13 @@ $header-fg: #FFF;
         "syntax-highlighting",
         "easybook"
 ;
+
+.cover {
+  display: inline-block;
+  background-color: black;
+  color: black;
+  cursor: pointer;
+}
+.cover:hover {
+  color: white;
+}
