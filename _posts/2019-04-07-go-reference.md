@@ -8,7 +8,7 @@ comments: true
 categories: programming
 ---
 
-# go 语言参考资料
+## go 语言参考资料 ##
 
 今年跳了一次槽，期间各种面试，除了算法题之外，还会问一些基础知识，因为主要的技术栈是 `go`，所以面试的时候避免不了一些基础问题。
 
@@ -35,3 +35,9 @@ categories: programming
 * [goreply](https://github.com/buger/goreplay)
 
 真是生有涯而知无涯啊，这份工作真是一刻都不得闲。
+
+## grpc 文档笔记 ##
+
+最近开始使用 grpc 进行开发，所以抽时间细读一下 grpc 的文档。
+
+相关笔记：[《gRPC 文档笔记》](https://zhangyet.github.io/archivers/grpc-doc-notes)
