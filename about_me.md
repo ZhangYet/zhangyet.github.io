@@ -20,7 +20,7 @@ excerpt: 个人简历，不定期更新。沽之哉，沽之哉！我待贾者�
 
 * 2019.04-至今 **SixteenMarkets**
 
-    1. [fix simulator](fix_simulator)
+    1. [fix simulator](https://zhangyet.github.io/archivers/fix_simulator): 熟识 [FIX 协议引擎](https://zhangyet.github.io/archivers/quickfixgo)，在 gRPC 服务中嵌入 lua runtime 实现。
 
 * 2017.09-2019.03 **滴滴云** 滴滴云用户系统
 
