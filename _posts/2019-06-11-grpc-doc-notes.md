@@ -18,4 +18,6 @@ HTTP2 会要求保留 header (以:开头的 header)在其他 header 之前，gRP
 
 该文档描述了 gRPC 使用 HTTP2 通信时一些用到的 header 和使用这些 header 的细节（好空泛的评论啊）。
 
+## HTTP to gRPC Status Code Mapping ##
 
+该[文档](https://github.com/grpc/grpc/blob/master/doc/http-grpc-status-mapping.md)说明如果返回的时候没有带上 gRPC status code，那么客户端应该把 http code 映射成对应的 gRPC status code。值得主义的是，400 被映射成 INTERNAL （可能是因为 grpc server 与 client 被看作一体的），另外 200 也会被映射成 UNKNOWN， 因为本来 200 就不应该没有 gRPC status code.
