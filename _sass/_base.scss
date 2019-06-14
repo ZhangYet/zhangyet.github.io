@@ -76,3 +76,40 @@ h1,h2,h3,h4,h5,h6{
 .MathJax_SVG_Display, .MathJax_Display, .MJXc-display, .MathJax_PHTML_Display {
     overflow-x: auto;
 }
+
+.footnotes {
+    p {
+        display: flex
+    }
+    ol li:nth-child(6) {
+        p {
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            .cover {
+                width: 95%
+            }
+            a {
+                position: absolute;
+                top: 40%;
+                right: 0;
+            }
+        }
+    }
+}
+
+.cover {
+    display: inline-block;
+    background-color: #E5E5E5;
+    color: black;
+    cursor: pointer;
+    filter: blur(4px);
+    border-radius: 10px;
+    padding: 10px;
+}
+
+.cover:hover {
+    color: white;
+    filter: none;
+    background-color: #e5e5e5;
+}
