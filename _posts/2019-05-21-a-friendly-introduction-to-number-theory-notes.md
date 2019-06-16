@@ -75,7 +75,7 @@ $$ b_ia = m \cdot x + c = M \cdot \alpha $$
 
 于是我们有 $\Phi$ 函数公式：
 
-1. 若 $p$ 是质数，且 $k \leq 1$，那么我们有 $$\Phi(p^k)=p^k-p^{k-1}$$ 。
+1. 若 $p$ 是质数，且 $k \geq 1$，那么我们有 $$\Phi(p^k)=p^k-p^{k-1}$$ 。
 
 2. 若 $\gcd(m, n)=1$，那么我们有 $\Phi(mn)=\Phi(m)\Phi(n)$
 
