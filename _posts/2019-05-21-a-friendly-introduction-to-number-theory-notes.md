@@ -142,6 +142,12 @@ $$ x^{ku} \equiv x^{\Phi(m)v+1} \equiv x \equiv b^u \pmod m $$
 
 上面第二个同余符号由欧拉公式保证成立。最后，求解 $x^k \equiv b \pmod m$ 的问题转化为 $ b^u \pmod m$ 的问题。
 
+## RSA ##
+
+RSA 算法的原理特别简单：找两个大素数 p 和 q，$m=pq$, $\Phi(m)=(p-1)(q-1)$，找到与 $\Phi(m)$ 互质的数k，m 和 k 是公钥，加密的过程就是算 $b=a^k \pmod m$。
+
+揭秘的过程就如17章同余求根运算，求 $x^k \equiv b \pmod m$，如果能知道 $\Phi(m)$，我们可以通过求解 $ku-\Phi(m)v=1$，从而求解这个方程。安危系于 $\Phi(m)$ 求解的难度。
+
 
 
 ## 脚注 ##
