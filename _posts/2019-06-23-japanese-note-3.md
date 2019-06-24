@@ -1,5 +1,5 @@
 ---
-title: "日语学习周记(至6月23日)"
+title: "日语学习周记（至6月23日）"
 tags: ["japanese"]
 date: 2019-06-23 17:02:18
 layout: post
