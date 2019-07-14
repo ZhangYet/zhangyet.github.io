@@ -1,7 +1,7 @@
 ---
 title: "《数论概论》笔记"
 tags: ["math"]
-date: 2019-05-21 12:33:01
+date: 2019-07-14 22:17:50
 layout: post
 excerpt: 《数论概论》的读书笔记。不得不说，这本书就好像评书一样，到处留扣子。
 categories: math
@@ -148,7 +148,11 @@ RSA 算法的原理特别简单：找两个大素数 p 和 q，$m=pq$, $\Phi(m)=
 
 揭秘的过程就如17章同余求根运算，求 $x^k \equiv b \pmod m$，如果能知道 $\Phi(m)$，我们可以通过求解 $ku-\Phi(m)v=1$，从而求解这个方程。安危系于 $\Phi(m)$ 求解的难度。
 
+## Carmichael Number ##
 
+费马小定理可以用于大素数检测：如果 $a^n \not\equiv a \mod n$，n 肯定不是素数。可惜反过来，若 $a^n \equiv a \mod n$ 对所有 $1 \leq a \leq n$ 成立，我们并不能判断 n 是素数。因为 Carmichael Number 就是这样的合数。
+
+本文很久没有更新的原因是我卡在 Korselt's Criterion (Carmichael Number 另一种等价描述)的证明里面了，这个证明的综合性很强，还用到中国同余定理和后面21章的内容，我决定先绕过。
 
 ## 脚注 ##
 
