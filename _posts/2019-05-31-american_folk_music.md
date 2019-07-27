@@ -8,6 +8,16 @@ categories: reading
 comments: true
 ---
 
+
+## 总结 ##
+
+本书只是比乐队简介好那么一点，读起来还是有点乏味。基本就是题材好的部分好看，题材不好的地方枯燥。土摩托缺乏熔炼裁剪的才能。把里面贴出了歌词的歌曲收集了一下。
+
+1. [一到十三章](http://music.163.com/playlist?id=2806524190)
+2. [十四到十九章](http://music.163.com/playlist?id=2830286925)
+3. [二十到二十四章](http://music.163.com/playlist?id=2891074680)
+4. [二十五章以后](http://music.163.com/playlist?id=2901834855)
+
 ## 第1到13章 ##
 
 ### 布里斯托的故事###
