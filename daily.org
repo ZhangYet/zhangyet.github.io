@@ -16,4 +16,5 @@
 ** DONE 看完 [Google org-mode video](https://orgmode.org/talks.html) :learning:
    CLOSED: [2019-08-17 六 16:45]
 ** IN-PROGRESS 读完 [Org Glossary](https://orgmode.org/worg/org-glossary.html) :learning:
+   DEADLINE: <2019-08-17 六>
 
