@@ -1,0 +1,15 @@
+#+STARTUP: showall
+* 备忘录<2019-08-17 六 13:37>
+** DONE 调查为什么有问题的 script 可以被创建。                         :work:
+   CLOSED: [2019-08-17 六 14:02]
+   - 猜想： 应该是数据库字段长度问题
+   - 确实就是数据库字段长度的问题
+** DONE 发送 execReport 。                                             :work:
+   CLOSED: [2019-08-17 六 14:52]
+** TODO 继续 review 。                                                 :work:
+** DONE 创建有问题的 script 时，会有bug。                              :work:
+   CLOSED: [2019-08-17 六 14:29]
+   - 正常创建还是没有问题的，至于缓存跟数据库不一致，那怪不得代码了。
+** TODO 背日文单词。                                               :learning:
+
+
