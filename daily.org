@@ -1,4 +1,3 @@
-#+STARTUP: showall
 * TODO 备忘录<2019-08-17 六 13:37>
 ** DONE 发送 execReport 。                                             :work:
    CLOSED: [2019-08-17 六 14:52]
@@ -12,9 +11,9 @@
    - 正常创建还是没有问题的，至于缓存跟数据库不一致，那怪不得代码了。
 ** DONE 背日文单词。                                               :learning:
    CLOSED: [2019-08-17 六 15:30]
-** TODO 看完第四课的视频
+** WAITING 看完第四课的视频                                        :learning:
 ** DONE 看完 [Google org-mode video](https://orgmode.org/talks.html) :learning:
    CLOSED: [2019-08-17 六 16:45]
-** IN-PROGRESS 读完 [Org Glossary](https://orgmode.org/worg/org-glossary.html) :learning:
-   DEADLINE: <2019-08-17 六>
+** DONE IN-PROGRESS 读完 [Org Glossary](https://orgmode.org/worg/org-glossary.html) :learning:
+   CLOSED: [2019-08-17 六 22:40] DEADLINE: <2019-08-17 六>
 
