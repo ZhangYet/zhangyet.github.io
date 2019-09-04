@@ -1,7 +1,7 @@
 ---
 title: "逍遥游"
 tags: ["science fiction"]
-date: 2019-08-14 16:45:02
+date: 2019-09-04 18:43:02
 layout: post
 excerpt: 人间世外，一个兀者被杀了。干员张一零和他的养生主2814奉命调查这件骇人的命案。
 categories: novel
