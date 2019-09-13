@@ -10,7 +10,7 @@ comments: true
 
 ## 缘起 ##
 
-豆瓣会删除书的条目，八月的时候它们删除了[《香港简史》](https://www.amazon.com/%E9%A6%99%E6%B8%AF%E7%B0%A1%E5%8F%B2%EF%BC%88%E9%A6%99%E6%B8%AF%E5%8F%B2%E5%90%8D%E8%91%97%E8%AD%AF%E5%8F%A2%EF%BC%89-Chinese-%E9%AB%98%E9%A6%AC%E5%8F%AF-ebook/dp/B07F8Q2673)，我在上面的笔记基本付诸东流[^1]。有一段时间豆瓣经常500。这两件事让我觉得豆瓣并不是很可靠。所以我开始用 [org-mode](https://orgmode.org) 做笔记，通过 github 来同步备份。
+豆瓣会删除书的条目，八月的时候它们删除了[《香港简史》](https://www.amazon.com/%E9%A6%99%E6%B8%AF%E7%B0%A1%E5%8F%B2%EF%BC%88%E9%A6%99%E6%B8%AF%E5%8F%B2%E5%90%8D%E8%91%97%E8%AD%AF%E5%8F%A2%EF%BC%89-Chinese-%E9%AB%98%E9%A6%AC%E5%8F%AF-ebook/dp/B07F8Q2673)，我在上面的笔记基本付诸东流[^1]。有一段时间豆瓣经常500。这两件事让我觉得豆瓣并不是很可靠。所以我开始用 [org-mode](https://orgmode.org) 做笔记，用 github 同步备份。
 
 后来我读到[卡尔维诺的《为什么读经典》](https://book.douban.com/subject/10555550/)，深感应该重新审视一下我读过的书，所以我写了个小脚本，把豆瓣读过列表的数据抓下来，整理成 org 文件。
 
@@ -25,7 +25,7 @@ comments: true
 
 ### 爬虫 ###
 
-因为很简单，所以没有用 [scrapy](https://scrapy.org)，实际上就是循环调用豆瓣请求已读链接的，把 html 保存下来，然后用 [beautiful soup](https://www.crummy.com/software/BeautifulSoup/bs4/doc/) 解析一下（实际上就是搜 selector）。[^3]
+因为很简单，所以没有用 [scrapy](https://scrapy.org)，实际上就是循环调用豆瓣请求已读链接的，把 html 保存下来，然后用 [beautiful soup](https://www.crummy.com/software/BeautifulSoup/bs4/doc/) 解析一下（实际上就是搜 selector）[^3]。
 
 ### org 文件生成 ###
 
@@ -43,7 +43,7 @@ comments: true
 
 最后把每一本书保存成一个单独的 org 文件，所有记录在我另一个 [repo](https://github.com/ZhangYet/vigna/tree/master/book_review/douban) 里面。
 
-![效果](images/manage_your_library_by_org.png)
+![效果](/images/manage_your_library_by_org.png)
 
 
 ## 脚注 ##
