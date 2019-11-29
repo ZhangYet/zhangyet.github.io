@@ -32,7 +32,7 @@ $$e^{i(A+B)}=e^{iA}e^{iB}=(\cos{A}+i\sin{A})(\cos{B}+i\sin{B})$$
 
 所以，我们可以知道
 
-$$ 2 \cos{x} = (\cos{A}+i\sin{A})(\cos{B}+i\sin{B}) + (\cos{A}-i\sin{A})(\cos{B}-i\sin{B}) $$
+$$ 2 \cos{A+B} = (\cos{A}+i\sin{A})(\cos{B}+i\sin{B}) + (\cos{A}-i\sin{A})(\cos{B}-i\sin{B}) $$
 
 最后，做乘法分配律，同类项消除，我们就可以得到余弦的和角公式了：
 
