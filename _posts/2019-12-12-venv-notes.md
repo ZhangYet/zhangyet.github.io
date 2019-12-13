@@ -1,5 +1,5 @@
 ---
-title: "venv"
+title: "venv 笔记"
 tags: ["python", "venv"]
 date: 2019-12-12 23:36:52
 layout: post
@@ -102,5 +102,9 @@ version = 3.7.0
 从这个角度，我们可以给出 python virtual environment 的定义：
 
 > Thus, a Python virtual environment in its simplest form would consist of nothing more than a copy or symlink of the Python binary accompanied by a pyvenv.cfg file and a site-packages directory.
+
+ 
+所以，当我们进入（通过 `source bin/activate`，仔细看上面）**进入一个 venv 创建的虚拟环境之后，运行 python 时，pyvenv.cfg 使 python 改变了 `sys.prefix` 和 `sys.base_prefix`**。
+
 
 
