@@ -97,4 +97,10 @@ include-system-site-packages = false
 version = 3.7.0
 ```
 
-在找到 pyvenv.cfg 之后，`sys.prefix` 的值会设定为 pyvenv.cfg 所在的文件夹，而 `sys.base_prefix` 会被设置为 pyvenv.cfg 中的 home 的值。
+在找到 pyvenv.cfg 之后，[sys.prefix](https://docs.python.org/3/library/sys.html#sys.prefix) 的值会设定为 pyvenv.cfg 所在的文件夹，而 [sys.base_prefix](https://docs.python.org/3/library/sys.html#sys.base_prefix) 会被设置为 pyvenv.cfg 中的 home 的值。当然，如果找不到 pyvenv.cfg 那么 python 会按老方法找到 python 可执行文件的路径以及 site-packages 的位置。
+
+从这个角度，我们可以给出 python virtual environment 的定义：
+
+> Thus, a Python virtual environment in its simplest form would consist of nothing more than a copy or symlink of the Python binary accompanied by a pyvenv.cfg file and a site-packages directory.
+
+
