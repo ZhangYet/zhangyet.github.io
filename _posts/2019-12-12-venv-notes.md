@@ -33,7 +33,7 @@ virtualenv -p python3.7 virtualenv-example # 用 virtualenv 创建一个虚拟�
 查看两个虚拟环境的区别：
 
 ```bash
-➜  temp cd venv-example && tree -L 3
+cd venv-example && tree -L 3
 .
 ├── bin
 │   ├── activate
@@ -55,7 +55,7 @@ virtualenv -p python3.7 virtualenv-example # 用 virtualenv 创建一个虚拟�
 ```
 
 ```bash
-➜  temp cd virtualenv-example && tree -L 2 # 留意这里 tree 的参数是2，因为如果改成3，lib 下面会有很多 symbol link，为了节约篇幅，这里不列出来了。
+cd virtualenv-example && tree -L 2 # 留意这里 tree 的参数是2，因为如果改成3，lib 下面会有很多 symbol link，为了节约篇幅，这里不列出来了。
 .
 ├── bin
 │   ├── activate
