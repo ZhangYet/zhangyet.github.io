@@ -1,5 +1,5 @@
 ---
-title: "venv 笔记"
+title: "python 虚拟环境的简单说明"
 tags: ["python", "venv"]
 date: 2019-12-12 23:36:52
 layout: post
@@ -104,7 +104,33 @@ version = 3.7.0
 > Thus, a Python virtual environment in its simplest form would consist of nothing more than a copy or symlink of the Python binary accompanied by a pyvenv.cfg file and a site-packages directory.
 
  
-所以，当我们进入（通过 `source bin/activate`，仔细看上面）**进入一个 venv 创建的虚拟环境之后，运行 python 时，pyvenv.cfg 使 python 改变了 `sys.prefix` 和 `sys.base_prefix`**。
+所以，当我们进入（通过 `source bin/activate`，仔细看上面）**进入一个 venv 创建的虚拟环境之后，运行 python 时，pyvenv.cfg 使 python 改变了 `sys.prefix` 和 `sys.base_prefix`**。而 [site.py](https://github.com/python/cpython/blob/3.8/Lib/site.py)[^1] 会在载入的时候，将 `sys.prefix` 加入 `[sys.path](https://docs.python.org/3/library/sys.html#sys.path)`。python 在运行时，会根据 `sys.path` 搜索对应的 module，见 [the module search patch](https://docs.python.org/3/tutorial/modules.html#the-module-search-path)。
+
+总结来说，venv 帮我们做的事情就是：
+
+1. 将 python 解释器复制或者链接到一个新目录（即虚拟环境的 bin 目录）；
+2. 在虚拟环境中生成 pyvenv.cfg 文件；
+3. 生成 activate 脚本；
+
+而其他工作则是 python 本身的机制完成的，在运行 activate 脚本之后，python 会运行虚拟环境中的 python 解释器，同时因为 pyvenv.cfg 的存在，python 会修改 `sys.prefix` 和 `sys.base_prefix`，后续所有 module search 工作都会优先在虚拟环境的目录下进行。
+
+## activate ##
+
+前面已经叙述了创建虚拟环境和进入虚拟环境之后的一些机制，中间缺失的一环是进入虚拟环境。
+
+创建虚拟环境后，venv 会为我们生成 activate 脚本，这个脚本是一个 shell 脚本，非常难读[^2]
+
+```bash
+_OLD_VIRTUAL_PATH="$PATH"
+PATH="$VIRTUAL_ENV/bin:$PATH"
+export PATH
+```
+
+首先 activate 有一个 `deactivate()` 函数，这个函数会还原系统所有的设置，所以 activate 脚本主要的工作就是：记录旧的变量值，替换新的变量值，所以其实没啥好说的。只有一点比较 tricky: 将 `$VIRTURL_ENV/bin` 放在 `$PATH` 最前面，这样系统搜索可执行文件的时候，会先搜索虚拟环境下的 bin 目录。
 
 
+## 脚注 ##
 
+[^1]: 可以直接阅读代码，也可以阅读相关库的文档：<https://docs.python.org/3/library/site.html>。
+
+[^2]: 所以我想鸽掉不谈。但是虚荣心和自尊心使我不能这样做。但我必须说，我讨厌 shell 脚本。
