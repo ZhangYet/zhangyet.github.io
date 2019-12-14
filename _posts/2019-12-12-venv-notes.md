@@ -104,7 +104,7 @@ version = 3.7.0
 > Thus, a Python virtual environment in its simplest form would consist of nothing more than a copy or symlink of the Python binary accompanied by a pyvenv.cfg file and a site-packages directory.
 
  
-所以，当我们进入（通过 `source bin/activate`，仔细看上面）**进入一个 venv 创建的虚拟环境之后，运行 python 时，pyvenv.cfg 使 python 改变了 `sys.prefix` 和 `sys.base_prefix`**。而 [site.py](https://github.com/python/cpython/blob/3.8/Lib/site.py)[^1] 会在载入的时候，将 `sys.prefix` 加入 `[sys.path](https://docs.python.org/3/library/sys.html#sys.path)`。python 在运行时，会根据 `sys.path` 搜索对应的 module，见 [the module search patch](https://docs.python.org/3/tutorial/modules.html#the-module-search-path)。
+所以，当我们进入（通过 `source bin/activate`，仔细看上面）**进入一个 venv 创建的虚拟环境之后，运行 python 时，pyvenv.cfg 使 python 改变了 `sys.prefix` 和 `sys.base_prefix`**。而 [site.py](https://github.com/python/cpython/blob/3.8/Lib/site.py)[^1] 会在载入的时候，将 `sys.prefix` 加入 [sys.path](https://docs.python.org/3/library/sys.html#sys.path)。python 在运行时，会根据 `sys.path` 搜索对应的 module，见 [the module search patch](https://docs.python.org/3/tutorial/modules.html#the-module-search-path)。
 
 总结来说，venv 帮我们做的事情就是：
 
