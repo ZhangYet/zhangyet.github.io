@@ -84,8 +84,6 @@ comments: true
 
 [kafka](https://kafka.apache.org/documentation/) 需要了解的东西太多，你看不过来的。
 
-## Zookeeper ##
-
 ## Docker ##
 
 ## ORM ##
