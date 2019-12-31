@@ -78,7 +78,7 @@ comments: true
 
 翻完了[《鮑參軍集注》](https://book.douban.com/subject/3124595/)，我还挺喜欢鲍照的，所以这本书也没有卖二手。
 
-九月重读了[《地海巫师》](https://book.douban.com/subject/24882304/)，除了第五部《地海奇风》，地海传奇我都读过了，最喜欢的还好似第一部《地海巫师》，其实[《地海古墓》](https://book.douban.com/subject/24882313/)也不错，后来我玩《绝地教团陨落》的时候，每次探索古墓我都想起峨团陵墓（希望我没有写错别字）。
+九月重读了[《地海巫师》](https://book.douban.com/subject/24882304/)，除了第五部《地海奇风》，地海传奇我都读过了，最喜欢的还是第一部《地海巫师》，其实[《地海古墓》](https://book.douban.com/subject/24882313/)也不错，后来我玩《绝地教团陨落》的时候，每次探索古墓我都想起峨团陵墓（希望我没有写错别字）。
 
 ### 十月 ###
 
@@ -105,7 +105,7 @@ comments: true
 
 ## 其他 ##
 
-今年学了 org-mode，开始用 org-mode 记录笔记，主要的笔记都放在[这个 git repo](https://github.com/ZhangYet/vigna/tree/master/book_review)里。还有一些在读的书，虽然很重要，但是毕竟还会写更详细的笔记，所以就不在这里写了。
+今年学了 org-mode，开始用 org-mode 记录笔记，主要的笔记都放在[这个 git repo](https://github.com/ZhangYet/vigna/tree/master/book_review) 里。还有一些在读的书，虽然很重要，但是毕竟还会写更详细的笔记，所以就不在这里写了。
 
 ## 脚注 ##
 
