@@ -1,10 +1,10 @@
 ---
 title: "The Darkest Night"
-tags: ["comments"]
+tags: ["comment"]
 date: 2020-04-23 23:43:31
 layout: post
 excerpt: 刚刚度过提前来临的中年危机。
-categories: comments
+categories: comment
 comments: true
 ---
 
