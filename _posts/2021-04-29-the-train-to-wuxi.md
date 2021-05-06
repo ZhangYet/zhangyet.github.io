@@ -57,7 +57,7 @@ comments: true
 
 下一站是诏安，光是听广播我根本打不出这个站名。
 
-![the_train_to_wuxi/E309AFAF-CFB9-409B-B5E2-BCED8FE6B26E.jpeg](../images/the_train_to_wuxi/E309AFAF-CFB9-409B-B5E2-BCED8FE6B26E.jpeg "诏安站"rttt)
+![the_train_to_wuxi/E309AFAF-CFB9-409B-B5E2-BCED8FE6B26E.jpeg](../images/the_train_to_wuxi/E309AFAF-CFB9-409B-B5E2-BCED8FE6B26E.jpeg "诏安站")
 
 
 
