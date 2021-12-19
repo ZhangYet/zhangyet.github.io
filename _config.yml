@@ -4,18 +4,19 @@ url: "https://zhangyet.github.io"
 baseurl: ""
 #timezone: Asia/Chongqing
 description: >
-   dantezy 的在线栋笃笑	     
+  dantezy 的在线栋笃笑
 
 # Your information
 email: zhangyet@gmail.com
 author: dantezy
 avatar: "https://www.gravatar.com/avatar/9d4a72055a6ab800d99f11d0822f0d2c"
 profile: 这个博客的标题来自黄子华栋笃笑的开场白：一派胡言，百嘴莫辩，千夫所至，万众期待。
-#twitter_username: dantezy2814
+twitter_username: dantezy2814
+
 #github_username: ZhangYet
 profile_links:
   Email: "zhangyet@gmail.com"
-  # You can add more profile links above, or edit _includes/sidebar.html 
+  # You can add more profile links above, or edit _includes/sidebar.html
 
 # Comment Service (Disqus or 多说)
 #  choose one and un-comment the line to active it
@@ -25,15 +26,15 @@ disqus_shortname: dantezy
 excerpt_separator: <!--more-->
 
 header:
-  links:             # Links on the header. Link to in-site page with a slash as prefix
+  links: # Links on the header. Link to in-site page with a slash as prefix
     About: /about/
     Category: /category/
 
 permalink: /archivers/:title
 plugins:
- - jekyll-paginate
- - jekyll-gist
- - jemoji
+  - jekyll-paginate
+  - jekyll-gist
+  - jemoji
 
 # Build settings
 paginate: 10
@@ -44,8 +45,7 @@ markdown: kramdown
 
 # https://jekyllrb.com/docs/configuration/#precedence
 defaults:
-  -
-    scope:
+  - scope:
       path: ""
       type: "posts"
     values:
@@ -55,3 +55,5 @@ kramdown:
   input: GFM
   syntax_highlighter: rouge
   math_engine: mathjax
+
+future: true
