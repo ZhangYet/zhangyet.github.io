@@ -18,15 +18,20 @@ excerpt: 个人简历，不定期更新。沽之哉，沽之哉！我待贾者�
 
 ## 工作与项目经验
 * 2021.10-至今 **Shopee Singapore**
-	转岗到 Shopee Singapore 之后，我主要负责各种系统工具的开发。
+
+	转岗到 Shopee Singapore 之后，主要负责各种系统工具的开发，与 Shopee 日常业务有一定距离。
     1. Ksnoop 系统可观测性项目。该项目主要包含两个组件：使用 go 语言开发的 os-agent 以及混合使用 go 和 bash script 的命令行工具 sysadmin 。
 	   其中 os-agent 负责采集系统指标，包括使用 **ebpf** 采集的内核数据以及其他硬件信息。sysadmin 是 os-agent 的客户端以及其他系统管理工具的入口。
 	   os-agent 监控了包括 CPU、磁盘和网卡在内的指标，os-agent 通过上报 prometheus 兼容的指标，可以无缝接入监控系统。ysadmin 提供了内核和热补丁管理功能。
 * 2020.04-2021.10 **Shopee Shenzhen**
+
+    2020年加入 Shopee Shenzhen 前期维护 Shopee Airpay (后合并进 Shopeepay)的促销功能, 后期维护 Shopeepay 的 core 模块。
+
     1. 维护 Airpay promotion 系统，采用 go 开发，包括促销管理工具，为支付流程提供促销计算 rpc 接口（上游传入订单，该接口校验用户使用的促销优惠并计算优惠后的价格）。
 	2. 维护 SPM(shopeepay module) core 模块，采用 python 开发，主要管理订单生成以及支付、发货前后的状态管理。
 
 * 2019.04-2020.01 **SixteenMarkets**
+	2019年应朋友邀请加入 SixteenMarkets 这是一家股票公司，很可惜的是，入职不到一年，它倒闭了。我开发的产品来不及上线。
 
     1. [fix simulator](https://zhangyet.github.io/archivers/fix_simulator): 熟识 [FIX 协议引擎](https://zhangyet.github.io/archivers/quickfixgo)，在 gRPC 服务中嵌入 lua runtime 实现。
 
