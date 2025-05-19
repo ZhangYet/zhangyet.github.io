@@ -17,8 +17,16 @@ excerpt: 个人简历，不定期更新。沽之哉，沽之哉！我待贾者�
 * 2013.09-2015.06 硕士 中山大学 计算数学
 
 ## 工作与项目经验
+* 2021.10-至今 **Shopee Singapore**
+	转岗到 Shopee Singapore 之后，我主要负责各种系统工具的开发。
+    1. Ksnoop 系统可观测性项目。该项目主要包含两个组件：使用 go 语言开发的 os-agent 以及混合使用 go 和 bash script 的命令行工具 sysadmin 。
+	   其中 os-agent 负责采集系统指标，包括使用 **ebpf** 采集的内核数据以及其他硬件信息。sysadmin 是 os-agent 的客户端以及其他系统管理工具的入口。
+	   os-agent 监控了包括 CPU、磁盘和网卡在内的指标，os-agent 通过上报 prometheus 兼容的指标，可以无缝接入监控系统。ysadmin 提供了内核和热补丁管理功能。
+* 2020.04-2021.10 **Shopee Shenzhen**
+    1. 维护 Airpay promotion 系统，采用 go 开发，包括促销管理工具，为支付流程提供促销计算 rpc 接口（上游传入订单，该接口校验用户使用的促销优惠并计算优惠后的价格）。
+	2. 维护 SPM(shopeepay module) core 模块，采用 python 开发，主要管理订单生成以及支付、发货前后的状态管理。
 
-* 2019.04-至今 **SixteenMarkets**
+* 2019.04-2020.01 **SixteenMarkets**
 
     1. [fix simulator](https://zhangyet.github.io/archivers/fix_simulator): 熟识 [FIX 协议引擎](https://zhangyet.github.io/archivers/quickfixgo)，在 gRPC 服务中嵌入 lua runtime 实现。
 
@@ -44,6 +52,16 @@ excerpt: 个人简历，不定期更新。沽之哉，沽之哉！我待贾者�
     1. `agent`: 每个节点部署的 agent 组件，负责数据收集和容器监控。
     1. `eru load balancer`: 基于 `openresty` 开发的 load balancer 组件。
     1. `日志系统`: 基于 `rsyslog` 开发的日志收集，展示系统。（这个系统有个缺陷，它没有全链路 trace，不利于定位问题）
+
+## 开源社区贡献
+### bcc 社区贡献
+1. [Add cpu filter to hardirqs/softirqs tools](https://github.com/iovisor/bcc/pull/5107)
+2. [libbpf-tools: add cpu filter for hardirqs/softirqs](https://github.com/iovisor/bcc/pull/5055)
+### bpftrace 社区贡献：
+1. [Add -d option in aot](https://github.com/bpftrace/bpftrace/pull/3363)
+2. [Opti `path` buildin in bpftrace](https://github.com/bpftrace/bpftrace/pull/3401)
+3. [Fix cgroup.path* unit test](https://github.com/bpftrace/bpftrace/pull/3434)
+
 
 ## 工作技能
 
